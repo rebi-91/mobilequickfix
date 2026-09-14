@@ -70,10 +70,11 @@
   position: sticky;
   top: 0;
   z-index: 40;
-  background: #FFFFFF;
+  background: #b5fff1;
   border-bottom: 1px solid var(--cp-line);
 }
 .cp-header .cp-shell {
+  
   display: flex;
   align-items: center;
   gap: 1.1rem;
@@ -114,7 +115,7 @@
   white-space: nowrap;
 }
 .cp-nav button:hover,
-.cp-nav a:hover { color: var(--cp-mint-deep); background: #F2F7F4; }
+.cp-nav a:hover { color: rgb(8, 142, 124);; background: #b5fff1; }
 .cp-nav svg { font-size: 0.7rem; opacity: 0.55; }
 
 .cp-header-right {
@@ -130,9 +131,9 @@
   text-decoration: none;
   white-space: nowrap;
 }
-.cp-phone:hover { color: var(--cp-mint-deep); }
+.cp-phone:hover { color: rgb(8, 142, 124); }
 .cp-book {
-  background: #5ae56f;
+  background: #89ebf8;
   color: #0d2d1c;
   border: none;
   border-radius: 999px;
@@ -144,7 +145,7 @@
   white-space: nowrap;
   transition: background 0.2s ease, transform 0.15s ease;
 }
-.cp-book:hover { background: var(--cp-mint-deep); transform: translateY(-1px); }
+.cp-book:hover { background: #23daf2; transform: translateY(-1px); }
 
 /* ------------------------------------------------------------------------
    Defensive overrides. Higher specificity than the rules above so a global

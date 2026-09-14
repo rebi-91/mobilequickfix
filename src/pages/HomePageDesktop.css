@@ -7,7 +7,7 @@
   --cp-line: #E6ECF2;
   --cp-mint: #00D364;
   --cp-mint-deep: #00B856;
-  --cp-mint-wash: #D9F9E9;
+  --cp-mint-wash: #94fac7;
   --cp-nhs: #0B63CE;
   --cp-navy: #0A1F44;
   --cp-band: #001F54;
@@ -20,7 +20,7 @@
 .cp-page {
   font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
   color: var(--cp-ink);
-  background: #FFFFFF;
+  background: linear-gradient(360deg, #b9efe1 0%, #F4F8FC 0%);;
   -webkit-font-smoothing: antialiased;
 }
 .cp-page *,
@@ -37,7 +37,7 @@
 .cp-hero {
   background:
     radial-gradient(900px 420px at 88% 8%, rgba(0, 211, 100, 0.13), transparent 70%),
-    linear-gradient(180deg, #F7FBFA 0%, #F4F8FC 100%);
+    linear-gradient(180deg, #b9efe1 0%, #F4F8FC 100%);
   padding: 3.5rem 0 4.5rem;
 }
 .cp-hero .cp-shell {
@@ -125,7 +125,7 @@
 .cp-go {
   border: none;
   border-radius: 999px;
-  background: var(--cp-ink);
+  background: #0e2a5b;
   color: #FFFFFF;
   font: inherit;
   font-size: 1.05rem;
@@ -137,7 +137,7 @@
   gap: 0.6rem;
   transition: background 0.2s ease;
 }
-.cp-go:hover { background: #16233A; }
+.cp-go:hover { background: #0e2a5b; }
 
 .cp-rating { display: flex; align-items: center; gap: 0.85rem; }
 .cp-avatars { display: flex; }
@@ -250,7 +250,7 @@
 
 /* =================================================== sections ========= */
 .cp-section { padding: 4.5rem 0; }
-.cp-section-alt { background: #F7FAFC; }
+.cp-section-alt { background: linear-gradient(360deg, #b9efe1 50%, #F4F8FC 100%); }
 .cp-head {
   display: flex;
   align-items: flex-end;
