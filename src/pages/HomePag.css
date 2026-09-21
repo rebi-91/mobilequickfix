@@ -1,0 +1,268 @@
+/* HomePage.css */
+
+/* Prevent horizontal scrolling except inside carousel,
+   and disable vertical overscroll bounce (no white “pull-up” at bottom) */
+   html, body {
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+    margin-top: 0px !important;
+    margin-bottom: 50px !important;
+    padding: 7px;
+  }
+  
+  .pt-header {
+    margin-top: 50px !important; /* header + top-bar height */
+
+  }
+  
+  .btn-start {
+    background-color: #0eeae6 !important;
+    color: #1f2f78 !important;
+    font-weight: 500 !important;
+    height: 45px;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 0.5rem; /* Rounded corners */
+    box-shadow:
+    0 2px 3px rgba(163, 164, 164, 0.95),
+    0 4px 6px rgba(0, 0, 0, 0.25);
+
+  /* smooth press animation */
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  cursor: pointer;
+
+  }
+  
+  /* Hero cards hidden below 768px */
+  @media (max-width: 767px) {
+    .hero-cards {
+      display: none !important;
+
+    }
+
+    /* New "Select" button in weight-loss container */
+.weight-select-btn {
+  background-color: cyan;
+  color: #001F54;
+  border: none;
+  border-radius: 0.375rem;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.getstartedbtn {
+  display: inline-flex;             /* flex to center content */
+  align-items: center;              /* vertical centering of text/icons */
+  justify-content: center; 
+  position: absolute;         /* horizontal centering */
+  margin-top: 1rem; 
+  bottom: 15px;
+  left: 15px;
+  height: 43px !important;                  /* center the button itself */
+  padding: 0.85rem 1.5rem;           /* adjust as needed */
+  background-color: #007bff !important;  /* Bootstrap blue */
+  color: #fff !important;
+  border: none;
+  border-radius: 0.4rem !important; /* rounded corners */
+  font-size: 1rem !important;
+  text-decoration: none;
+  cursor: pointer;
+  
+}
+
+
+.weight-select-btn:hover {
+  background-color: #b2ffff;
+}
+
+  }
+  
+  /* Carousel container styling */
+  .pharmacy-first-carousel .pharmacy-first-track {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    gap: 16px;
+  }
+  
+  .pharmacy-first-carousel .pharmacy-first-track > .card {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+  
+  /* hide scrollbar on WebKit */
+  .pharmacy-first-carousel .pharmacy-first-track::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Google logo next to rating */
+  .google-logo {
+    height: 24px;
+    margin-right: 0.5rem;
+  }
+  
+  /* Ensure no extra white space appears when dragging up/down */
+  body {
+    background-color: #030303 !important;
+  }
+  
+  /* (Optional) If you want to ensure individual scrollable areas inside the page still work normally,
+     you can allow overscroll within them explicitly. For example: */
+  /*
+  .some-scrollable-container {
+    overscroll-behavior-y: contain;
+  }
+  */
+  /* Add to HomePage.css */
+
+/* Container styling */
+.find-us {
+  background-color: #f9f9fa;        /* light gray background */
+  border-radius: 0.75rem;
+  padding: 2rem 1rem;
+}
+
+/* Section title */
+.find-us h2 {
+  color: rgb(28, 43, 57);
+  font-weight: 700;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+/* Left column “card” look */
+.find-us .col-md-6:first-child {
+  background-color: #ffffff;
+  border: 1px solid #e2e2e5;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Paragraph text in left column */
+.find-us .col-md-6:first-child p {
+  color: rgb(48, 48, 51);
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+/* Strong labels (Phone, Email, etc.) */
+.find-us .col-md-6:first-child strong {
+  color: rgb(28, 43, 57);
+}
+
+/* Hours list styling: transform inline <br> into spacing */
+/* Ensure “Hours:” label is inline so that the single <br> only moves to the next line once */
+.find-us .col-md-6:first-child p:last-child strong {
+  display: inline-block; /* was previously block, which added an extra break */
+  margin-bottom: 0.25rem !important;
+}
+
+/* Remove any default margin on the paragraph to avoid extra gap */
+.find-us .col-md-6:first-child p {
+  margin: 0 0 1rem; /* keep bottom margin for spacing from next paragraph, but no top margin */
+}
+
+/* Tighten line-height for the hours text lines */
+.find-us .col-md-6:first-child p:last-child {
+  line-height: 1.4;
+}
+
+
+/* Right column (map iframe) wrapper */
+.find-us .col-md-6:last-child {
+  margin-bottom: 1.5rem !important;
+}
+.hero-section {
+  background-color: #fff;
+  margin-bottom: -10px !important;
+}
+/* Map iframe styling */
+.find-us iframe {
+  border: 1px solid #e2e2e5;
+  border-radius: 0.5rem;
+  width: 100%;
+  height: 350px;           /* slightly taller for better visibility */
+  margin-bottom: 20px;     /* space below iframe */
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+  .find-us {
+    padding: 1.5rem 0.5rem;
+  }
+  .find-us h2 {
+    font-size: 1.75rem;
+  }
+  .find-us .col-md-6:first-child {
+    padding: 1rem;
+  }
+  .find-us iframe {
+    height: 300px;
+  }
+}
+
+/* HomePage.css */
+.no-underline, .no-underline:hover, .no-underline:focus {
+  text-decoration: none !important;
+  color: inherit;
+}
+
+/* HomePage.css */
+#find-us {
+  scroll-margin-top: 30px; /* match your header’s actual height */
+}
+
+
+/* disabled “coming soon” cards */
+.coming-soon {
+  opacity: 1;             /* keep full card opacity */
+  pointer-events: none;   /* still non-clickable */
+}
+
+/* only slightly lighten & gray out the image */
+.coming-soon img {
+  filter: grayscale(0%) brightness(105%);
+  /* remove the hover-scale */
+  transition: none !important;
+}
+
+/* give coming-soon cards a distinct pastel background */
+.popular-services .coming-soon .card {
+  background-color: #fcfeff !important;
+  border: 1px dashed #a0c4ff !important;
+  
+}
+
+/* mute the text a bit */
+.popular-services .coming-soon .card-body {
+  opacity: 0.7 !important;
+  
+}
+
+/* remove pointer cursor */
+.popular-services .coming-soon .card {
+  cursor: default;
+  
+}
+
+/* ===== POPULAR SERVICES CARD SHADOW ===== */
+.popular-services .card {
+  /* remove any lighter defaults if present */ 
+  box-shadow: 
+    0 2px 4px rgba(168, 171, 173, 0.95),
+    0 4px 6px rgba(236, 234, 234, 0.952) !important;
+}
+
+
+.svc-img img.oral-img {
+  object-fit: contain !important;  /* don’t crop */
+  transform: scale(0.1) !important;           /* zoom out slightly */
+}
+
+
+
+

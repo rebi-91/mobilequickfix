@@ -1,238 +1,909 @@
+// import React, { useState } from 'react';
+// import { useNavigate } from 'react-router-dom';
+// import Header from './Header';
+// import './HomePage.css';
+
+// const MAIN_TEXT_COLOR = 'rgb(119, 128, 159)';
+// const MAI_TEXT_COLOR = 'rgb(14, 75, 141)';
+// const MAINS_TEXT_COLOR = 'rgb(14, 75, 141)';
+// const MAIS_TEXT_COLOR = 'rgb(14, 75, 141)';
+// const ACCENT_COLOR = '#00D364';
+// const ACC_COLOR = 'rgb(42, 157, 239)';
+
+// const chevronDown =
+//   'https://zbcowibbhjynfpkqgupz.supabase.co/storage/v1/object/public/booking//down-chevron.png';
+
+// // Titles that should show a "Coming Soon" badge and be non-clickable
+// const COMING_SOON = new Set(['Yellow Fever']);
+
+// // Mapping dropdown selections to service-page URLs with the appropriate tab param
+// const NAV_LINKS: Record<string, string> = {
+//   'All Services': '/services?tab=ALL',
+//   'Travel Clinic': '/services?tab=TRAVEL',
+//   'Private Treatments': '/services?tab=PRIVATE',
+//   'NHS Treatments': '/services?tab=NHS',
+//   'Pharmacy First': '/services?tab=PHARMACY',
+// };
+
+// const HERO_CARD_LINKS: Record<string, string> = {
+//   'Weight loss clinic': '/weight-loss-clinic',
+//   'Travel Clinic': '/travel-clinic',
+//   'Ear wax removal': '/microsuction-earwax-removal',
+// };
+
+// const HERO_CARD_IMAGES: Record<string, string> = {
+//   'Weight loss clinic':
+//     'https://gpcdcgwgkciyogknekwp.supabase.co/storage/v1/object/public/pharmacy/weightclinic.jpg',
+//   'Travel Clinic':
+//     'https://clinic-digital.lon1.cdn.digitaloceanspaces.com/100/530057/yyrgMObVYh.webp',
+//   'Ear wax removal':
+//     'https://clearclinics.co.uk/wp-content/uploads/2023/10/earwax-removal-1024x561.jpg',
+// };
+
+// const EAR_PIERCING_SERVICE = {
+//   title: 'Ear Piercing',
+//   link: '/book/46',
+//   sub: 'New service now available - Professional ear piercing for £40 .',
+//   img:
+//     'https://media.istockphoto.com/id/1500832940/photo/pharmacist-uses-a-specialized-piercing-gun-to-create-a-new-earlobe-piercing.jpg?s=612x612&w=0&k=20&c=xd0ka7W4LjBrgcc7otBcS4UbbwXFEzAycc08GfZ_kfo=',
+// };
+
+// const covidvaccine = [
+//   {
+//     title: 'COVID vaccine',
+//     link: '/book/16',
+//     sub: 'Free COVID-19 booster for eligible patients (over 75).',
+//     img:
+//       'https://lead-services-agency.fra1.cdn.digitaloceanspaces.com/4/542160/8ruIf7vdRW.webp',
+//   },
+//   {
+//     title: 'Flu jab',
+//     link: '/book/14',
+//     sub: 'Free NHS flu jab to keep you protected.',
+//     img:
+//       'https://lead-services-agency.fra1.cdn.digitaloceanspaces.com/4/101404/2-EtcvQ5-J.webp',
+//   },
+//   {
+//     title: 'Private COVID-19 Vaccination',
+//     link: '/book/45',
+//     sub: 'Private COVID-19 Vaccination - £75 per dose',
+//     img:
+//       'https://aylestonepharmacy.co.uk/wp-content/uploads/2025/10/senior-male-patient-getting-vaccinated-coronavirus-scaled.jpg',
+//   },
+// ];
+
+// const POPULAR_SERVICES = [
+//   {
+//     title: 'Weight loss clinic',
+//     link: '/weight-loss-clinic',
+//     sub: 'Achieve your weight goals.',
+//     img:
+//       'https://gpcdcgwgkciyogknekwp.supabase.co/storage/v1/object/public/pharmacy/weightclinic.jpg',
+//   },
+//   {
+//     title: 'Ear Wax Removal',
+//     link: '/microsuction-earwax-removal',
+//     sub: 'Safe microsuction for clear, comfortable ears.',
+//     img:
+//       'https://lead-services-agency.fra1.cdn.digitaloceanspaces.com/4/123156/AHHct1yZUR.webp',
+//   },
+//   {
+//     title: 'Travel Vaccinations',
+//     link: '/travel-clinic',
+//     sub: 'Comprehensive vaccine service for your trip.',
+//     img:
+//       'https://focus.independent.ie/thumbor/kZpypGnMeOe4CqXsAfQrkN28nCk=/0x8:1500x835/731x411/prod-mh-ireland/058221aa-c2c3-11ed-8d5b-0210609a3fe2.jpg',
+//   },
+//   {
+//     title: 'Vitamin B12 Injection',
+//     link: '/book/6',
+//     sub: 'Restore energy and improve vitality.',
+//     img:
+//       'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fservices%2Fvitamin-b12-injection.webp&w=640&q=75',
+//   },
+//   {
+//     title: 'Oral Contraception',
+//     link: '/oral-contraceptives',
+//     sub: 'Fast, confidential help when you need it.',
+//     img:
+//       'https://gpcdcgwgkciyogknekwp.supabase.co/storage/v1/object/public/pharmacy/pic.png',
+//   },
+//   {
+//     title: 'Erectile dysfunction',
+//     link: '/book/20',
+//     sub: 'Effective solutions tailored to your needs.',
+//     img:
+//       'https://gpcdcgwgkciyogknekwp.supabase.co/storage/v1/object/public/pharmacy/ed.jpeg',
+//   },
+// ];
+
+// const VACCINATIONS = [
+//   {
+//     title: 'Chickenpox',
+//     link: '/book/31',
+//     img:
+//       'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fvaccines%2Fchickenpox.webp&w=1080&q=75',
+//   },
+//   {
+//     title: 'Hepatitis A',
+//     link: '/book/24',
+//     img:
+//       'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fvaccines%2Fhepatitis.webp&w=1080&q=75',
+//   },
+//   {
+//     title: 'Typhoid',
+//     link: '/book/26',
+//     img:
+//       'https://ysm-res.cloudinary.com/image/upload/ar_16:9,c_fill,dpr_3.0,f_auto,g_faces:auto,q_auto:eco,w_500/v1/yms/prod/d01914a4-5add-47e4-ba61-8681278f830a',
+//   },
+//   {
+//     title: 'Yellow Fever',
+//     link: '/book/4',
+//     img:
+//       'https://www.leamingtontravelclinic.co.uk/wp-content/uploads/2023/08/Yellow_fever2.jpg',
+//   },
+// ];
+
+// const PHARMACY_FIRST = [
+//   {
+//     title: 'Sinusitis',
+//     link: '/book/21',
+//     img:
+//       'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fsinusitis.webp&w=1200&q=75',
+//     subtitle: 'Ages 12+',
+//   },
+//   {
+//     title: 'Sore throat',
+//     link: '/book/2',
+//     img:
+//       'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fsore-throat.webp&w=1200&q=75',
+//     subtitle: 'Ages 5+',
+//   },
+//   {
+//     title: 'Earache',
+//     link: '/book/19',
+//     img:
+//       'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fearache.webp&w=1200&q=75',
+//     subtitle: 'Ages 1–17',
+//   },
+//   {
+//     title: 'Infected insect bite',
+//     link: '/book/8',
+//     img:
+//       'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Finsect-bite.webp&w=1200&q=75',
+//     subtitle: 'Ages 1+',
+//   },
+//   {
+//     title: 'Impetigo',
+//     link: '/book/7',
+//     img:
+//       'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fimpetigo.webp&w=1200&q=75',
+//     subtitle: 'Ages 1+',
+//   },
+//   {
+//     title: 'Shingles',
+//     link: '/book/44',
+//     img:
+//       'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fshingles.webp&w=1200&q=75',
+//     subtitle: 'Ages 18+',
+//   },
+//   {
+//     title: 'Uncomplicated UTI (women)',
+//     link: '/book/5',
+//     img:
+//       'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Futi.webp&w=1200&q=75',
+//     subtitle: 'Women aged 16–64',
+//   },
+// ];
+
+// const HomePage: React.FC = () => {
+//   const [selection, setSelection] = useState<string>('All Services');
+//   const navigate = useNavigate();
+
+//   const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+//     const pick = e.target.value;
+//     setSelection(pick);
+
+//     if (NAV_LINKS[pick]) {
+//       navigate(NAV_LINKS[pick]);
+//     }
+//   };
+
+//   return (
+//     <>
+//       <Header />
+
+//       <main className="pt-header">
+//         {/* Hero Section */}
+//         <section className="container py-5 hero-section">
+//           <div className="row align-items-center">
+//             <div className="col-md-6">
+//               <h1
+//                 style={{
+//                   color: MAIS_TEXT_COLOR,
+//                   fontWeight: 700,
+//                   fontSize: '2.5rem',
+//                 }}
+//               >
+//                 Trusted <span style={{ color: ACCENT_COLOR }}>Pharmacy</span>
+//                 <br />
+//                 Care in <span style={{ color: ACC_COLOR }}>Coleshill</span>
+//               </h1>
+
+//               <p style={{ color: MAIN_TEXT_COLOR, margin: '1rem 0' }}>
+//                 Explore our wide range of treatments or consult with our
+//                 medical professionals.
+//               </p>
+
+//               <div className="mb-3">
+//                 <select
+//                   value={selection}
+//                   onChange={handleSelect}
+//                   className="form-select w-100"
+//                 >
+//                   {Object.keys(NAV_LINKS).map((opt) => (
+//                     <option key={opt} value={opt}>
+//                       {opt}
+//                     </option>
+//                   ))}
+//                 </select>
+//               </div>
+
+//               <div className="mb-3">
+//                 <button
+//                   className="btn btn-start w-100"
+//                   onClick={() => {
+//                     const dest =
+//                       NAV_LINKS[selection] || NAV_LINKS['All Services'];
+//                     navigate(dest);
+//                   }}
+//                 >
+//                   Get Started Now
+//                 </button>
+//               </div>
+
+//               <a
+//                 href="https://www.google.com/search?client=safari&rls=en&q=coleshill+pharmacy"
+//                 target="_blank"
+//                 rel="noopener noreferrer"
+//                 className="btn btn-link p-0 d-flex align-items-center"
+//                 style={{ textDecoration: 'none' }}
+//               >
+//                 <img
+//                   src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_74x24dp.png"
+//                   alt="Google"
+//                   className="google-logo"
+//                 />
+//                 <span style={{ color: MAIS_TEXT_COLOR, marginLeft: 8 }}>
+//                   ★★★★★ 4.3/5.0
+//                 </span>
+//               </a>
+//             </div>
+
+//             <div className="col-md-6 d-none d-md-flex hero-cards gap-3">
+//               <div
+//                 className="card stacked-card"
+//                 style={{ width: 260, cursor: 'pointer' }}
+//                 onClick={() => navigate(HERO_CARD_LINKS['Weight loss clinic'])}
+//               >
+//                 <div className="overflow-hidden" style={{ height: 220 }}>
+//                   <img
+//                     src={HERO_CARD_IMAGES['Weight loss clinic']}
+//                     alt="Weight loss clinic"
+//                     className="card-img"
+//                   />
+//                 </div>
+
+//                 <div className="card-body d-flex justify-content-between align-items-center px-3">
+//                   <small>Weight loss clinic</small>
+//                   <img src={chevronDown} className="chevron-90" alt="" />
+//                 </div>
+
+//                 <div className="card-footer text-center">
+//                   <button
+//                     className="btn weight-select-btn"
+//                     onClick={() =>
+//                       navigate(HERO_CARD_LINKS['Weight loss clinic'])
+//                     }
+//                   >
+//                     Select
+//                   </button>
+//                 </div>
+//               </div>
+
+//               <div className="d-flex flex-column gap-3">
+//                 {['Travel Clinic', 'Ear wax removal'].map((key) => {
+//                   const isSoon = COMING_SOON.has(key);
+
+//                   return (
+//                     <div
+//                       key={key}
+//                       className="card side-card"
+//                       style={{
+//                         cursor: isSoon ? 'default' : 'pointer',
+//                       }}
+//                       onClick={() => {
+//                         if (!isSoon) navigate(HERO_CARD_LINKS[key]);
+//                       }}
+//                     >
+//                       <div className="overflow-hidden" style={{ height: 140 }}>
+//                         <img
+//                           src={HERO_CARD_IMAGES[key]}
+//                           alt={key}
+//                           className="card-img"
+//                         />
+//                       </div>
+
+//                       <div className="card-body d-flex justify-content-between align-items-center px-3">
+//                         <small>{key}</small>
+//                       </div>
+//                     </div>
+//                   );
+//                 })}
+//               </div>
+//             </div>
+//           </div>
+//         </section>
+
+//         {/* New Ear Piercing Service */}
+//         <section className="container py-5 bg-light rounded popular-services">
+//           <div className="d-flex justify-content-between align-items-center mb-4">
+//             <h2
+//               style={{
+//                 color: MAINS_TEXT_COLOR,
+//                 fontWeight: 500,
+//                 fontSize: '1.5rem',
+//               }}
+//             >
+//               New in-store service
+//             </h2>
+//           </div>
+
+//           <div className="row g-4">
+//             <div className="col-sm-6 col-md-4">
+//               <div
+//                 className="card h-100 shadow-sm border-0"
+//                 style={{
+//                   cursor: 'pointer',
+//                   position: 'relative',
+//                 }}
+//                 onClick={() => navigate(EAR_PIERCING_SERVICE.link)}
+//               >
+//                 <div style={{ height: 140, overflow: 'hidden' }}>
+//                   <img
+//                     src={EAR_PIERCING_SERVICE.img}
+//                     alt={EAR_PIERCING_SERVICE.title}
+//                     className="w-100 h-100"
+//                     style={{
+//                       objectFit: 'cover',
+//                       transition: 'transform 0.3s',
+//                     }}
+//                     onMouseEnter={(e) => {
+//                       e.currentTarget.style.transform = 'scale(1.05)';
+//                     }}
+//                     onMouseLeave={(e) => {
+//                       e.currentTarget.style.transform = 'scale(1)';
+//                     }}
+//                   />
+//                 </div>
+
+//                 <div className="card-body">
+//                   <h5 className="card-title mb-1" style={{ fontSize: '1rem' }}>
+//                     {EAR_PIERCING_SERVICE.title}
+//                   </h5>
+//                   <p className="text-muted small mb-0">
+//                     {EAR_PIERCING_SERVICE.sub}
+//                   </p>
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+//         </section>
+
+//         {/* Free NHS Vaccination */}
+//         <section className="container py-5 bg-light rounded popular-services">
+//           <div className="d-flex justify-content-between align-items-center mb-4">
+//             <h2
+//               style={{
+//                 color: MAINS_TEXT_COLOR,
+//                 fontWeight: 500,
+//                 fontSize: '1.5rem',
+//               }}
+//             >
+//               Free NHS vaccination
+//             </h2>
+//           </div>
+
+//           <div className="row g-4">
+//             {covidvaccine.map((svc) => {
+//               const isSoon = COMING_SOON.has(svc.title);
+
+//               return (
+//                 <div key={svc.title} className="col-sm-6 col-md-4">
+//                   <div
+//                     className={`card h-100 shadow-sm border-0 ${
+//                       isSoon ? 'coming-soon' : ''
+//                     }`}
+//                     style={{
+//                       cursor: isSoon ? 'default' : 'pointer',
+//                       position: 'relative',
+//                     }}
+//                     onClick={() => {
+//                       if (!isSoon) navigate(svc.link);
+//                     }}
+//                   >
+//                     <div style={{ height: 140, overflow: 'hidden' }}>
+//                       <img
+//                         src={svc.img}
+//                         alt={svc.title}
+//                         className="w-100 h-100"
+//                         style={{
+//                           objectFit: 'cover',
+//                           transition: 'transform 0.3s',
+//                         }}
+//                         onMouseEnter={(e) => {
+//                           if (!isSoon) {
+//                             e.currentTarget.style.transform = 'scale(1.05)';
+//                           }
+//                         }}
+//                         onMouseLeave={(e) => {
+//                           if (!isSoon) {
+//                             e.currentTarget.style.transform = 'scale(1)';
+//                           }
+//                         }}
+//                       />
+//                     </div>
+
+//                     {isSoon && (
+//                       <div
+//                         style={{
+//                           position: 'absolute',
+//                           top: 0,
+//                           left: 0,
+//                           right: 0,
+//                           bottom: 0,
+//                           background: 'rgba(227, 233, 233, 0.67)',
+//                           display: 'flex',
+//                           alignItems: 'center',
+//                           justifyContent: 'center',
+//                           fontWeight: 600,
+//                           color: 'rgba(6, 133, 133, 0.67)',
+//                           fontSize: '1.25rem',
+//                           borderRadius: '0.25rem',
+//                         }}
+//                       >
+//                         Coming Soon
+//                       </div>
+//                     )}
+
+//                     <div className="card-body">
+//                       <h5 className="card-title mb-1" style={{ fontSize: '1rem' }}>
+//                         {svc.title}
+//                       </h5>
+//                       <p className="text-muted small mb-0">{svc.sub}</p>
+//                     </div>
+//                   </div>
+//                 </div>
+//               );
+//             })}
+//           </div>
+//         </section>
+
+//         {/* Popular Services */}
+//         <section className="container py-5 bg-light rounded popular-services">
+//           <div className="d-flex justify-content-between align-items-center mb-4">
+//             <h2
+//               style={{
+//                 color: MAINS_TEXT_COLOR,
+//                 fontWeight: 500,
+//                 fontSize: '1.5rem',
+//               }}
+//             >
+//               Popular services
+//             </h2>
+//           </div>
+
+//           <div className="row g-4">
+//             {POPULAR_SERVICES.map((svc) => {
+//               const isSoon = COMING_SOON.has(svc.title);
+
+//               return (
+//                 <div key={svc.title} className="col-sm-6 col-md-4">
+//                   <div
+//                     className={`card h-100 shadow-sm border-0 ${
+//                       isSoon ? 'coming-soon' : ''
+//                     }`}
+//                     style={{
+//                       cursor: isSoon ? 'default' : 'pointer',
+//                       position: 'relative',
+//                     }}
+//                     onClick={() => {
+//                       if (!isSoon) navigate(svc.link);
+//                     }}
+//                   >
+//                     <div style={{ height: 140, overflow: 'hidden' }}>
+//                       <img
+//                         src={svc.img}
+//                         alt={svc.title}
+//                         className="w-100 h-100"
+//                         style={{
+//                           objectFit: 'cover',
+//                           transition: 'transform 0.3s',
+//                         }}
+//                         onMouseEnter={(e) => {
+//                           if (!isSoon) {
+//                             e.currentTarget.style.transform = 'scale(1.05)';
+//                           }
+//                         }}
+//                         onMouseLeave={(e) => {
+//                           if (!isSoon) {
+//                             e.currentTarget.style.transform = 'scale(1)';
+//                           }
+//                         }}
+//                       />
+//                     </div>
+
+//                     {isSoon && (
+//                       <div
+//                         style={{
+//                           position: 'absolute',
+//                           top: 0,
+//                           left: 0,
+//                           right: 0,
+//                           bottom: 0,
+//                           background: 'rgba(227, 233, 233, 0.67)',
+//                           display: 'flex',
+//                           alignItems: 'center',
+//                           justifyContent: 'center',
+//                           fontWeight: 600,
+//                           color: 'rgba(6, 133, 133, 0.67)',
+//                           fontSize: '1.25rem',
+//                           borderRadius: '0.25rem',
+//                         }}
+//                       >
+//                         Coming Soon
+//                       </div>
+//                     )}
+
+//                     <div className="card-body">
+//                       <h5 className="card-title mb-1" style={{ fontSize: '1rem' }}>
+//                         {svc.title}
+//                       </h5>
+//                       <p className="text-muted small mb-0">{svc.sub}</p>
+//                     </div>
+//                   </div>
+//                 </div>
+//               );
+//             })}
+//           </div>
+//         </section>
+
+//         {/* Popular Vaccinations */}
+//         {/* <section className="container py-5">
+//           <h2
+//             style={{
+//               color: MAIN_TEXT_COLOR,
+//               fontWeight: 700,
+//               fontSize: '1.75rem',
+//               marginBottom: '1rem',
+//             }}
+//           >
+//             Popular <span style={{ color: MAIN_TEXT_COLOR }}>Vaccinations</span>
+//           </h2>
+//           <div className="row g-4">
+//             {VACCINATIONS.map((vac) => {
+//               const isSoon = COMING_SOON.has(vac.title);
+//               return (
+//                 <div key={vac.title} className="col-sm-6 col-md-3">
+//                   <div
+//                     className="position-relative rounded overflow-hidden shadow-sm"
+//                     style={{
+//                       height: 280,
+//                       cursor: isSoon ? 'default' : 'pointer',
+//                     }}
+//                     onClick={() => {
+//                       if (!isSoon) navigate(vac.link);
+//                     }}
+//                   >
+//                     <img
+//                       src={vac.img}
+//                       className="w-100 h-100"
+//                       style={{
+//                         objectFit: 'cover',
+//                         transition: 'transform 0.3s',
+//                       }}
+//                       onMouseEnter={(e) =>
+//                         !isSoon && (e.currentTarget.style.transform = 'scale(1.05)')
+//                       }
+//                       onMouseLeave={(e) =>
+//                         !isSoon && (e.currentTarget.style.transform = 'scale(1)')
+//                       }
+//                       alt={vac.title}
+//                     />
+
+//                     {isSoon && (
+//                       <div
+//                         style={{
+//                           position: 'absolute',
+//                           top: 0,
+//                           left: 0,
+//                           right: 0,
+//                           bottom: 0,
+//                           background: 'rgba(255,255,255,0.7)',
+//                           display: 'flex',
+//                           alignItems: 'center',
+//                           justifyContent: 'center',
+//                           fontSize: '1.25rem',
+//                           fontWeight: 600,
+//                           color: '#333',
+//                           borderRadius: '0.25rem',
+//                         }}
+//                       >
+//                         Coming Soon
+//                       </div>
+//                     )}
+
+//                     <div
+//                       style={{
+//                         position: 'absolute',
+//                         bottom: 0,
+//                         left: 0,
+//                         right: 0,
+//                         padding: '1rem',
+//                         background: 'linear-gradient(transparent, rgba(0,0,0,0.6))',
+//                         color: '#fff',
+//                       }}
+//                     >
+//                       <h5 style={{ margin: 0 }}>{vac.title}</h5>
+//                       <small>Book vaccine →</small>
+//                     </div>
+//                   </div>
+//                 </div>
+//               );
+//             })}
+//           </div>
+//         </section> */}
+
+//         {/* Pharmacy First Carousel */}
+//         <section
+//           className="container-fluid px-4 pharmacy-first-carousel"
+//           style={{ background: '#0F1637', color: '#fff', padding: '3rem 0' }}
+//         >
+//           <div className="d-flex justify-content-between align-items-center mb-3">
+//             <h2 style={{ fontWeight: 700, fontSize: '2rem' }}>
+//               Pharmacy First <span style={{ fontWeight: 400 }}>treatments</span>
+//             </h2>
+//           </div>
+
+//           <p style={{ opacity: 0.8, marginBottom: '2rem' }}>
+//             Free NHS advice and treatments for common conditions.
+//           </p>
+
+//           <div
+//             className="d-flex overflow-auto pharmacy-first-track"
+//             style={{ gap: '16px' }}
+//           >
+//             {PHARMACY_FIRST.map((svc, idx) => (
+//               <div
+//                 key={idx}
+//                 className="card text-center flex-shrink-0"
+//                 style={{
+//                   width: 250,
+//                   height: 390,
+//                   border: 'none',
+//                   borderRadius: '0.75rem',
+//                   backgroundColor: '#fff',
+//                   boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+//                 }}
+//               >
+//                 <div style={{ height: 220, overflow: 'hidden' }}>
+//                   <img
+//                     src={svc.img}
+//                     alt={svc.title}
+//                     className="w-100 h-100"
+//                     style={{ objectFit: 'cover', transition: 'transform 0.3s' }}
+//                     onMouseEnter={(e) =>
+//                       (e.currentTarget.style.transform = 'scale(1.2)')
+//                     }
+//                     onMouseLeave={(e) =>
+//                       (e.currentTarget.style.transform = 'scale(1)')
+//                     }
+//                   />
+//                 </div>
+
+//                 <div className="card-body">
+//                   <h5 style={{ fontWeight: 600 }}>{svc.title}</h5>
+//                   <p className="small mb-2">{svc.subtitle}</p>
+//                   <button
+//                     className="getstartedbtn"
+//                     style={{ width: '88%', paddingBottom: '1rem' }}
+//                     onClick={() => navigate(svc.link)}
+//                   >
+//                     Get started
+//                   </button>
+//                 </div>
+//               </div>
+//             ))}
+//           </div>
+//         </section>
+
+//         {/* Find Us */}
+//         <section id="find-us" className="container py-5 find-us">
+//           <h2 style={{ color: MAI_TEXT_COLOR, fontWeight: 700 }}>Find us</h2>
+
+//           <div className="row align-items-center mt-4">
+//             <div className="col-md-6">
+//               <p>
+//                 Contact us for travel vaccination, ear wax removal, ear
+//                 piercing and a wide range of NHS or private services we offer.
+//               </p>
+
+//               <p>
+//                 <strong>Phone:</strong> 01675 466014
+//               </p>
+
+//               <p>
+//                 <strong>Email:</strong> coleshillpharmacy@gmail.com
+//               </p>
+
+//               <p>
+//                 <strong>Address:</strong> 114–116 High St, Coleshill, Birmingham
+//                 B46 3BJ
+//               </p>
+
+//               <p>
+//                 <strong>Hours:</strong>
+//                 <br />
+//                 Monday–Friday 8:30 am–6 pm
+//                 <br />
+//                 Saturday 9 am–5:30 pm
+//                 <br />
+//                 Sunday Closed
+//               </p>
+//             </div>
+
+//             <div className="col-md-6">
+//               <iframe
+//                 title="Coleshill Pharmacy Location"
+//                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2483.123456789!2d-1.7890123!3d52.5654321!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x48776789abcdef12:0x3456789abcdef!2s114-116%20High%20St,%20Coleshill%20B46%203BJ,%20UK!5e0!3m2!1sen!2suk!4v1623456789012"
+//                 width="100%"
+//                 height="300"
+//                 style={{
+//                   border: 0,
+//                   borderRadius: '0.5rem',
+//                   marginBottom: '30px',
+//                 }}
+//                 allowFullScreen
+//                 loading="lazy"
+//               />
+//             </div>
+//           </div>
+//         </section>
+//       </main>
+//     </>
+//   );
+// };
+
+// export default HomePage;
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from './Header';
 import './HomePage.css';
 
-const MAIN_TEXT_COLOR = 'rgb(119, 128, 159)';
-const MAI_TEXT_COLOR = 'rgb(14, 75, 141)';
-const MAINS_TEXT_COLOR = 'rgb(14, 75, 141)';
-const MAIS_TEXT_COLOR = 'rgb(14, 75, 141)';
-const ACCENT_COLOR = '#00D364';
-const ACC_COLOR = 'rgb(42, 157, 239)';
+const MAIN_TEXT_COLOR = 'rgb(85, 98, 90)';
+const HEADING_COLOR = 'rgb(17, 17, 17)';
+const SECTION_TEXT_COLOR = 'rgb(10, 74, 28)';
+const ACCENT_COLOR = '#1E9E34';
 
-const chevronDown =
-  'https://zbcowibbhjynfpkqgupz.supabase.co/storage/v1/object/public/booking//down-chevron.png';
+/* ------------------------------------------------------------------
+   Business details — replace the TODO placeholders before going live
+------------------------------------------------------------------- */
+const PHONE_DISPLAY = '07XXX XXX XXX';             // TODO
+const PHONE_TEL = 'tel:+447000000000';             // TODO
+const WHATSAPP_URL = 'https://wa.me/447000000000'; // TODO
 
-// Titles that should show a "Coming Soon" badge and be non-clickable
-const COMING_SOON = new Set(['Yellow Fever']);
+/* Images cut from the flyer, stored in /public/images */
+const IMG = '/images/';
 
-// Mapping dropdown selections to service-page URLs with the appropriate tab param
+// Mapping dropdown selections to booking URLs
 const NAV_LINKS: Record<string, string> = {
-  'All Services': '/services?tab=ALL',
-  'Travel Clinic': '/services?tab=TRAVEL',
-  'Private Treatments': '/services?tab=PRIVATE',
-  'NHS Treatments': '/services?tab=NHS',
-  'Pharmacy First': '/services?tab=PHARMACY',
+  'All Repairs': '/book',
+  'Phone Repair': '/book?device=phone',
+  'Tablet Repair': '/book?device=tablet',
+  'Laptop Repair': '/book?device=laptop',
+  'Gaming Console Repair': '/book?device=console',
 };
 
 const HERO_CARD_LINKS: Record<string, string> = {
-  'Weight loss clinic': '/weight-loss-clinic',
-  'Travel Clinic': '/travel-clinic',
-  'Ear wax removal': '/microsuction-earwax-removal',
+  'We come to you': '/book?service=callout',
+  'Screen repairs': '/book?service=screen',
+  'Battery replacement': '/book?service=battery',
 };
 
-const HERO_CARD_IMAGES: Record<string, string> = {
-  'Weight loss clinic':
-    'https://gpcdcgwgkciyogknekwp.supabase.co/storage/v1/object/public/pharmacy/weightclinic.jpg',
-  'Travel Clinic':
-    'https://clinic-digital.lon1.cdn.digitaloceanspaces.com/100/530057/yyrgMObVYh.webp',
-  'Ear wax removal':
-    'https://clearclinics.co.uk/wp-content/uploads/2023/10/earwax-removal-1024x561.jpg',
-};
-
-const EAR_PIERCING_SERVICE = {
-  title: 'Ear Piercing',
-  link: '/book/46',
-  sub: 'New service now available - Professional ear piercing for £40 .',
-  img:
-    'https://media.istockphoto.com/id/1500832940/photo/pharmacist-uses-a-specialized-piercing-gun-to-create-a-new-earlobe-piercing.jpg?s=612x612&w=0&k=20&c=xd0ka7W4LjBrgcc7otBcS4UbbwXFEzAycc08GfZ_kfo=',
-};
-
-const covidvaccine = [
+const REPAIRS = [
   {
-    title: 'COVID vaccine',
-    link: '/book/16',
-    sub: 'Free COVID-19 booster for eligible patients (over 75).',
-    img:
-      'https://lead-services-agency.fra1.cdn.digitaloceanspaces.com/4/542160/8ruIf7vdRW.webp',
+    title: 'Screen Repairs',
+    link: '/book?service=screen',
+    sub: 'Cracked, black or unresponsive screens replaced.',
+    img: `${IMG}mqf-service-1.jpg`,
   },
   {
-    title: 'Flu jab',
-    link: '/book/14',
-    sub: 'Free NHS flu jab to keep you protected.',
-    img:
-      'https://lead-services-agency.fra1.cdn.digitaloceanspaces.com/4/101404/2-EtcvQ5-J.webp',
+    title: 'Battery Replacement',
+    link: '/book?service=battery',
+    sub: 'For phones that drain fast or switch off early.',
+    img: `${IMG}mqf-service-2.jpg`,
   },
   {
-    title: 'Private COVID-19 Vaccination',
-    link: '/book/45',
-    sub: 'Private COVID-19 Vaccination - £75 per dose',
-    img:
-      'https://aylestonepharmacy.co.uk/wp-content/uploads/2025/10/senior-male-patient-getting-vaccinated-coronavirus-scaled.jpg',
-  },
-];
-
-const POPULAR_SERVICES = [
-  {
-    title: 'Weight loss clinic',
-    link: '/weight-loss-clinic',
-    sub: 'Achieve your weight goals.',
-    img:
-      'https://gpcdcgwgkciyogknekwp.supabase.co/storage/v1/object/public/pharmacy/weightclinic.jpg',
+    title: 'Water Damage',
+    link: '/book?service=water',
+    sub: 'Cleaning, drying and checks after a spill or drop.',
+    img: `${IMG}mqf-service-3.jpg`,
   },
   {
-    title: 'Ear Wax Removal',
-    link: '/microsuction-earwax-removal',
-    sub: 'Safe microsuction for clear, comfortable ears.',
-    img:
-      'https://lead-services-agency.fra1.cdn.digitaloceanspaces.com/4/123156/AHHct1yZUR.webp',
+    title: 'General Repairs',
+    link: '/book?service=general',
+    sub: 'Buttons, speakers, cameras, microphones and more.',
+    img: `${IMG}mqf-service-4.jpg`,
   },
   {
-    title: 'Travel Vaccinations',
-    link: '/travel-clinic',
-    sub: 'Comprehensive vaccine service for your trip.',
-    img:
-      'https://focus.independent.ie/thumbor/kZpypGnMeOe4CqXsAfQrkN28nCk=/0x8:1500x835/731x411/prod-mh-ireland/058221aa-c2c3-11ed-8d5b-0210609a3fe2.jpg',
+    title: 'All Mobile Brands',
+    link: '/book',
+    sub: 'Not sure if we fix yours? Send us the model.',
+    img: `${IMG}mqf-service-5.jpg`,
   },
   {
-    title: 'Vitamin B12 Injection',
-    link: '/book/6',
-    sub: 'Restore energy and improve vitality.',
-    img:
-      'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fservices%2Fvitamin-b12-injection.webp&w=640&q=75',
-  },
-  {
-    title: 'Oral Contraception',
-    link: '/oral-contraceptives',
-    sub: 'Fast, confidential help when you need it.',
-    img:
-      'https://gpcdcgwgkciyogknekwp.supabase.co/storage/v1/object/public/pharmacy/pic.png',
-  },
-  {
-    title: 'Erectile dysfunction',
-    link: '/book/20',
-    sub: 'Effective solutions tailored to your needs.',
-    img:
-      'https://gpcdcgwgkciyogknekwp.supabase.co/storage/v1/object/public/pharmacy/ed.jpeg',
-  },
-];
-
-const VACCINATIONS = [
-  {
-    title: 'Chickenpox',
-    link: '/book/31',
-    img:
-      'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fvaccines%2Fchickenpox.webp&w=1080&q=75',
-  },
-  {
-    title: 'Hepatitis A',
-    link: '/book/24',
-    img:
-      'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fvaccines%2Fhepatitis.webp&w=1080&q=75',
-  },
-  {
-    title: 'Typhoid',
-    link: '/book/26',
-    img:
-      'https://ysm-res.cloudinary.com/image/upload/ar_16:9,c_fill,dpr_3.0,f_auto,g_faces:auto,q_auto:eco,w_500/v1/yms/prod/d01914a4-5add-47e4-ba61-8681278f830a',
-  },
-  {
-    title: 'Yellow Fever',
-    link: '/book/4',
-    img:
-      'https://www.leamingtontravelclinic.co.uk/wp-content/uploads/2023/08/Yellow_fever2.jpg',
-  },
-];
-
-const PHARMACY_FIRST = [
-  {
-    title: 'Sinusitis',
-    link: '/book/21',
-    img:
-      'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fsinusitis.webp&w=1200&q=75',
-    subtitle: 'Ages 12+',
-  },
-  {
-    title: 'Sore throat',
-    link: '/book/2',
-    img:
-      'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fsore-throat.webp&w=1200&q=75',
-    subtitle: 'Ages 5+',
-  },
-  {
-    title: 'Earache',
-    link: '/book/19',
-    img:
-      'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fearache.webp&w=1200&q=75',
-    subtitle: 'Ages 1–17',
-  },
-  {
-    title: 'Infected insect bite',
-    link: '/book/8',
-    img:
-      'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Finsect-bite.webp&w=1200&q=75',
-    subtitle: 'Ages 1+',
-  },
-  {
-    title: 'Impetigo',
-    link: '/book/7',
-    img:
-      'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fimpetigo.webp&w=1200&q=75',
-    subtitle: 'Ages 1+',
-  },
-  {
-    title: 'Shingles',
-    link: '/book/44',
-    img:
-      'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fshingles.webp&w=1200&q=75',
-    subtitle: 'Ages 18+',
-  },
-  {
-    title: 'Uncomplicated UTI (women)',
-    link: '/book/5',
-    img:
-      'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Futi.webp&w=1200&q=75',
-    subtitle: 'Women aged 16–64',
+    title: 'Charging Port Repair',
+    link: '/book?service=charging',
+    sub: 'Loose cable, slow charging or no charging at all.',
+    img: `${IMG}mqf-service-6.jpg`,
   },
 ];
 
 const HomePage: React.FC = () => {
-  const [selection, setSelection] = useState<string>('All Services');
+  const [selection, setSelection] = useState<string>('All Repairs');
   const navigate = useNavigate();
 
   const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const pick = e.target.value;
     setSelection(pick);
-
-    if (NAV_LINKS[pick]) {
-      navigate(NAV_LINKS[pick]);
-    }
   };
 
   return (
     <>
-      <Header />
+      {/* Header */}
+      <header className="mq-header">
+        <div className="container d-flex align-items-center justify-content-between">
+          <img src={`${IMG}mqf-logo.jpg`} alt="Mobile Quick Fix" className="mq-header-logo" onClick={() => navigate('/')} />
+          <a href={PHONE_TEL} className="btn mq-header-call">Call us</a>
+        </div>
+      </header>
 
-      <main className="pt-header">
+      <main className="mq-main">
         {/* Hero Section */}
-        <section className="container py-5 hero-section">
+        <section className="container py-4 hero-section">
           <div className="row align-items-center">
             <div className="col-md-6">
+              <img
+                src={`${IMG}mqf-script.jpg`}
+                alt="Get your device back in no time!"
+                className="mq-hero-script mb-2"
+              />
+
               <h1
                 style={{
-                  color: MAIS_TEXT_COLOR,
-                  fontWeight: 700,
-                  fontSize: '2.5rem',
+                  color: HEADING_COLOR,
+                  fontWeight: 800,
+                  fontSize: '2.3rem',
+                  lineHeight: 1.1,
                 }}
               >
-                Trusted <span style={{ color: ACCENT_COLOR }}>Pharmacy</span>
+                Fast <span style={{ color: ACCENT_COLOR }}>Phone</span> Repairs
                 <br />
-                Care in <span style={{ color: ACC_COLOR }}>Coleshill</span>
+                at Your <span style={{ color: ACCENT_COLOR }}>Door</span>
               </h1>
 
               <p style={{ color: MAIN_TEXT_COLOR, margin: '1rem 0' }}>
-                Explore our wide range of treatments or consult with our
-                medical professionals.
+                Screens, batteries, charging ports and water damage for all
+                major brands. We come to you and fix it on the spot.
               </p>
 
               <div className="mb-3">
@@ -240,6 +911,7 @@ const HomePage: React.FC = () => {
                   value={selection}
                   onChange={handleSelect}
                   className="form-select w-100"
+                  aria-label="What needs fixing?"
                 >
                   {Object.keys(NAV_LINKS).map((opt) => (
                     <option key={opt} value={opt}>
@@ -252,534 +924,155 @@ const HomePage: React.FC = () => {
               <div className="mb-3">
                 <button
                   className="btn btn-start w-100"
-                  onClick={() => {
-                    const dest =
-                      NAV_LINKS[selection] || NAV_LINKS['All Services'];
-                    navigate(dest);
-                  }}
+                  onClick={() => navigate(NAV_LINKS[selection] || NAV_LINKS['All Repairs'])}
                 >
-                  Get Started Now
+                  Get a Quote Now
                 </button>
               </div>
 
-              <a
-                href="https://www.google.com/search?client=safari&rls=en&q=coleshill+pharmacy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-link p-0 d-flex align-items-center"
-                style={{ textDecoration: 'none' }}
-              >
-                <img
-                  src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_74x24dp.png"
-                  alt="Google"
-                  className="google-logo"
-                />
-                <span style={{ color: MAIS_TEXT_COLOR, marginLeft: 8 }}>
-                  ★★★★★ 4.3/5.0
-                </span>
-              </a>
+              <div className="d-flex gap-2">
+                <a href={PHONE_TEL} className="btn btn-outline-quick flex-fill">
+                  Call {PHONE_DISPLAY}
+                </a>
+                <a
+                  href={WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-outline-quick flex-fill"
+                >
+                  WhatsApp
+                </a>
+              </div>
             </div>
 
+            {/* Hero cards (tablet and desktop only, like the pharmacy site) */}
             <div className="col-md-6 d-none d-md-flex hero-cards gap-3">
               <div
                 className="card stacked-card"
                 style={{ width: 260, cursor: 'pointer' }}
-                onClick={() => navigate(HERO_CARD_LINKS['Weight loss clinic'])}
+                onClick={() => navigate(HERO_CARD_LINKS['We come to you'])}
               >
-                <div className="overflow-hidden" style={{ height: 220 }}>
-                  <img
-                    src={HERO_CARD_IMAGES['Weight loss clinic']}
-                    alt="Weight loss clinic"
-                    className="card-img"
-                  />
+                <div className="overflow-hidden mq-green-bg" style={{ height: 220 }}>
+                  <img src={`${IMG}mqf-house.jpg`} alt="We come to your door" className="card-img" />
                 </div>
-
-                <div className="card-body d-flex justify-content-between align-items-center px-3">
-                  <small>Weight loss clinic</small>
-                  <img src={chevronDown} className="chevron-90" alt="" />
+                <div className="card-body px-3">
+                  <small>We come to your door</small>
                 </div>
-
                 <div className="card-footer text-center">
-                  <button
-                    className="btn weight-select-btn"
-                    onClick={() =>
-                      navigate(HERO_CARD_LINKS['Weight loss clinic'])
-                    }
-                  >
-                    Select
-                  </button>
+                  <button className="btn weight-select-btn">Book a call-out</button>
                 </div>
               </div>
 
               <div className="d-flex flex-column gap-3">
-                {['Travel Clinic', 'Ear wax removal'].map((key) => {
-                  const isSoon = COMING_SOON.has(key);
-
-                  return (
-                    <div
-                      key={key}
-                      className="card side-card"
-                      style={{
-                        cursor: isSoon ? 'default' : 'pointer',
-                      }}
-                      onClick={() => {
-                        if (!isSoon) navigate(HERO_CARD_LINKS[key]);
-                      }}
-                    >
-                      <div className="overflow-hidden" style={{ height: 140 }}>
-                        <img
-                          src={HERO_CARD_IMAGES[key]}
-                          alt={key}
-                          className="card-img"
-                        />
-                      </div>
-
-                      <div className="card-body d-flex justify-content-between align-items-center px-3">
-                        <small>{key}</small>
-                      </div>
+                {['Screen repairs', 'Battery replacement'].map((key, i) => (
+                  <div
+                    key={key}
+                    className="card side-card"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => navigate(HERO_CARD_LINKS[key])}
+                  >
+                    <div className="overflow-hidden bg-white" style={{ height: 140 }}>
+                      <img
+                        src={`${IMG}mqf-service-${i + 1}.jpg`}
+                        alt={key}
+                        className="card-img card-img-contain"
+                      />
                     </div>
-                  );
-                })}
+                    <div className="card-body px-3">
+                      <small>{key}</small>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </section>
 
-        {/* New Ear Piercing Service */}
-        <section className="container py-5 bg-light rounded popular-services">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2
-              style={{
-                color: MAINS_TEXT_COLOR,
-                fontWeight: 500,
-                fontSize: '1.5rem',
-              }}
-            >
-              New in-store service
-            </h2>
-          </div>
-
-          <div className="row g-4">
-            <div className="col-sm-6 col-md-4">
-              <div
-                className="card h-100 shadow-sm border-0"
-                style={{
-                  cursor: 'pointer',
-                  position: 'relative',
-                }}
-                onClick={() => navigate(EAR_PIERCING_SERVICE.link)}
-              >
-                <div style={{ height: 140, overflow: 'hidden' }}>
-                  <img
-                    src={EAR_PIERCING_SERVICE.img}
-                    alt={EAR_PIERCING_SERVICE.title}
-                    className="w-100 h-100"
-                    style={{
-                      objectFit: 'cover',
-                      transition: 'transform 0.3s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'scale(1.05)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'scale(1)';
-                    }}
-                  />
-                </div>
-
-                <div className="card-body">
-                  <h5 className="card-title mb-1" style={{ fontSize: '1rem' }}>
-                    {EAR_PIERCING_SERVICE.title}
-                  </h5>
-                  <p className="text-muted small mb-0">
-                    {EAR_PIERCING_SERVICE.sub}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Free NHS Vaccination */}
-        <section className="container py-5 bg-light rounded popular-services">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2
-              style={{
-                color: MAINS_TEXT_COLOR,
-                fontWeight: 500,
-                fontSize: '1.5rem',
-              }}
-            >
-              Free NHS vaccination
-            </h2>
-          </div>
-
-          <div className="row g-4">
-            {covidvaccine.map((svc) => {
-              const isSoon = COMING_SOON.has(svc.title);
-
-              return (
-                <div key={svc.title} className="col-sm-6 col-md-4">
-                  <div
-                    className={`card h-100 shadow-sm border-0 ${
-                      isSoon ? 'coming-soon' : ''
-                    }`}
-                    style={{
-                      cursor: isSoon ? 'default' : 'pointer',
-                      position: 'relative',
-                    }}
-                    onClick={() => {
-                      if (!isSoon) navigate(svc.link);
-                    }}
-                  >
-                    <div style={{ height: 140, overflow: 'hidden' }}>
-                      <img
-                        src={svc.img}
-                        alt={svc.title}
-                        className="w-100 h-100"
-                        style={{
-                          objectFit: 'cover',
-                          transition: 'transform 0.3s',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isSoon) {
-                            e.currentTarget.style.transform = 'scale(1.05)';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isSoon) {
-                            e.currentTarget.style.transform = 'scale(1)';
-                          }
-                        }}
-                      />
-                    </div>
-
-                    {isSoon && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          background: 'rgba(227, 233, 233, 0.67)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 600,
-                          color: 'rgba(6, 133, 133, 0.67)',
-                          fontSize: '1.25rem',
-                          borderRadius: '0.25rem',
-                        }}
-                      >
-                        Coming Soon
-                      </div>
-                    )}
-
-                    <div className="card-body">
-                      <h5 className="card-title mb-1" style={{ fontSize: '1rem' }}>
-                        {svc.title}
-                      </h5>
-                      <p className="text-muted small mb-0">{svc.sub}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Popular Services */}
-        <section className="container py-5 bg-light rounded popular-services">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2
-              style={{
-                color: MAINS_TEXT_COLOR,
-                fontWeight: 500,
-                fontSize: '1.5rem',
-              }}
-            >
-              Popular services
-            </h2>
-          </div>
-
-          <div className="row g-4">
-            {POPULAR_SERVICES.map((svc) => {
-              const isSoon = COMING_SOON.has(svc.title);
-
-              return (
-                <div key={svc.title} className="col-sm-6 col-md-4">
-                  <div
-                    className={`card h-100 shadow-sm border-0 ${
-                      isSoon ? 'coming-soon' : ''
-                    }`}
-                    style={{
-                      cursor: isSoon ? 'default' : 'pointer',
-                      position: 'relative',
-                    }}
-                    onClick={() => {
-                      if (!isSoon) navigate(svc.link);
-                    }}
-                  >
-                    <div style={{ height: 140, overflow: 'hidden' }}>
-                      <img
-                        src={svc.img}
-                        alt={svc.title}
-                        className="w-100 h-100"
-                        style={{
-                          objectFit: 'cover',
-                          transition: 'transform 0.3s',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isSoon) {
-                            e.currentTarget.style.transform = 'scale(1.05)';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isSoon) {
-                            e.currentTarget.style.transform = 'scale(1)';
-                          }
-                        }}
-                      />
-                    </div>
-
-                    {isSoon && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          background: 'rgba(227, 233, 233, 0.67)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 600,
-                          color: 'rgba(6, 133, 133, 0.67)',
-                          fontSize: '1.25rem',
-                          borderRadius: '0.25rem',
-                        }}
-                      >
-                        Coming Soon
-                      </div>
-                    )}
-
-                    <div className="card-body">
-                      <h5 className="card-title mb-1" style={{ fontSize: '1rem' }}>
-                        {svc.title}
-                      </h5>
-                      <p className="text-muted small mb-0">{svc.sub}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Popular Vaccinations */}
-        {/* <section className="container py-5">
-          <h2
-            style={{
-              color: MAIN_TEXT_COLOR,
-              fontWeight: 700,
-              fontSize: '1.75rem',
-              marginBottom: '1rem',
-            }}
-          >
-            Popular <span style={{ color: MAIN_TEXT_COLOR }}>Vaccinations</span>
-          </h2>
-          <div className="row g-4">
-            {VACCINATIONS.map((vac) => {
-              const isSoon = COMING_SOON.has(vac.title);
-              return (
-                <div key={vac.title} className="col-sm-6 col-md-3">
-                  <div
-                    className="position-relative rounded overflow-hidden shadow-sm"
-                    style={{
-                      height: 280,
-                      cursor: isSoon ? 'default' : 'pointer',
-                    }}
-                    onClick={() => {
-                      if (!isSoon) navigate(vac.link);
-                    }}
-                  >
-                    <img
-                      src={vac.img}
-                      className="w-100 h-100"
-                      style={{
-                        objectFit: 'cover',
-                        transition: 'transform 0.3s',
-                      }}
-                      onMouseEnter={(e) =>
-                        !isSoon && (e.currentTarget.style.transform = 'scale(1.05)')
-                      }
-                      onMouseLeave={(e) =>
-                        !isSoon && (e.currentTarget.style.transform = 'scale(1)')
-                      }
-                      alt={vac.title}
-                    />
-
-                    {isSoon && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          background: 'rgba(255,255,255,0.7)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '1.25rem',
-                          fontWeight: 600,
-                          color: '#333',
-                          borderRadius: '0.25rem',
-                        }}
-                      >
-                        Coming Soon
-                      </div>
-                    )}
-
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        padding: '1rem',
-                        background: 'linear-gradient(transparent, rgba(0,0,0,0.6))',
-                        color: '#fff',
-                      }}
-                    >
-                      <h5 style={{ margin: 0 }}>{vac.title}</h5>
-                      <small>Book vaccine →</small>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section> */}
-
-        {/* Pharmacy First Carousel */}
-        <section
-          className="container-fluid px-4 pharmacy-first-carousel"
-          style={{ background: '#0F1637', color: '#fff', padding: '3rem 0' }}
-        >
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h2 style={{ fontWeight: 700, fontSize: '2rem' }}>
-              Pharmacy First <span style={{ fontWeight: 400 }}>treatments</span>
-            </h2>
-          </div>
-
-          <p style={{ opacity: 0.8, marginBottom: '2rem' }}>
-            Free NHS advice and treatments for common conditions.
-          </p>
-
+        {/* We come to you */}
+        <section className="container py-4">
           <div
-            className="d-flex overflow-auto pharmacy-first-track"
-            style={{ gap: '16px' }}
+            className="card border-0 shadow-sm mq-callout-card overflow-hidden"
+            onClick={() => navigate(HERO_CARD_LINKS['We come to you'])}
           >
-            {PHARMACY_FIRST.map((svc, idx) => (
-              <div
-                key={idx}
-                className="card text-center flex-shrink-0"
-                style={{
-                  width: 250,
-                  height: 390,
-                  border: 'none',
-                  borderRadius: '0.75rem',
-                  backgroundColor: '#fff',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                }}
-              >
-                <div style={{ height: 220, overflow: 'hidden' }}>
-                  <img
-                    src={svc.img}
-                    alt={svc.title}
-                    className="w-100 h-100"
-                    style={{ objectFit: 'cover', transition: 'transform 0.3s' }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.transform = 'scale(1.2)')
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.transform = 'scale(1)')
-                    }
-                  />
-                </div>
+            <img src={`${IMG}mqf-devices.jpg`} alt="We come to your door for repair! Phones, tablets, laptops and consoles." className="w-100" />
+            <div className="card-body">
+              <h5 className="card-title mb-1" style={{ fontSize: '1.05rem', color: '#fff' }}>
+                No shop trip needed
+              </h5>
+              <p className="small mb-0" style={{ color: '#CFEFD8' }}>
+                Pick a time and place, home or work, and we'll bring the parts and fix it there.
+              </p>
+            </div>
+          </div>
+        </section>
 
-                <div className="card-body">
-                  <h5 style={{ fontWeight: 600 }}>{svc.title}</h5>
-                  <p className="small mb-2">{svc.subtitle}</p>
-                  <button
-                    className="getstartedbtn"
-                    style={{ width: '88%', paddingBottom: '1rem' }}
-                    onClick={() => navigate(svc.link)}
-                  >
-                    Get started
-                  </button>
+        {/* Repairs */}
+        <section className="container py-5 bg-light rounded popular-services">
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h2 style={{ color: SECTION_TEXT_COLOR, fontWeight: 600, fontSize: '1.5rem' }}>
+              What we repair
+            </h2>
+          </div>
+
+          <div className="row g-3">
+            {REPAIRS.map((svc) => (
+              <div key={svc.title} className="col-6 col-md-4">
+                <div
+                  className="card h-100 shadow-sm border-0"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => navigate(svc.link)}
+                >
+                  <div className="bg-white mq-repair-img">
+                    <img src={svc.img} alt={svc.title} className="w-100 h-100" />
+                  </div>
+                  <div className="card-body">
+                    <p className="text-muted small mb-0">{svc.sub}</p>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Find Us */}
-        <section id="find-us" className="container py-5 find-us">
-          <h2 style={{ color: MAI_TEXT_COLOR, fontWeight: 700 }}>Find us</h2>
+        {/* Brands and devices */}
+        <section className="container py-5 bg-light rounded popular-services">
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h2 style={{ color: SECTION_TEXT_COLOR, fontWeight: 600, fontSize: '1.5rem' }}>
+              Brands and devices we fix
+            </h2>
+          </div>
 
-          <div className="row align-items-center mt-4">
-            <div className="col-md-6">
-              <p>
-                Contact us for travel vaccination, ear wax removal, ear
-                piercing and a wide range of NHS or private services we offer.
-              </p>
+          <div className="card border-0 shadow-sm p-3">
+            <img src={`${IMG}mqf-brands.jpg`} alt="Apple, Samsung, Xiaomi, Huawei, Oppo, OnePlus and Motorola" className="w-100 mb-3" />
+            <img src={`${IMG}mqf-categories.jpg`} alt="Phones, tablets, laptops and gaming consoles" className="w-100" />
+          </div>
+        </section>
 
-              <p>
-                <strong>Phone:</strong> 01675 466014
-              </p>
-
-              <p>
-                <strong>Email:</strong> coleshillpharmacy@gmail.com
-              </p>
-
-              <p>
-                <strong>Address:</strong> 114–116 High St, Coleshill, Birmingham
-                B46 3BJ
-              </p>
-
-              <p>
-                <strong>Hours:</strong>
-                <br />
-                Monday–Friday 8:30 am–6 pm
-                <br />
-                Saturday 9 am–5:30 pm
-                <br />
-                Sunday Closed
-              </p>
-            </div>
-
-            <div className="col-md-6">
-              <iframe
-                title="Coleshill Pharmacy Location"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2483.123456789!2d-1.7890123!3d52.5654321!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x48776789abcdef12:0x3456789abcdef!2s114-116%20High%20St,%20Coleshill%20B46%203BJ,%20UK!5e0!3m2!1sen!2suk!4v1623456789012"
-                width="100%"
-                height="300"
-                style={{
-                  border: 0,
-                  borderRadius: '0.5rem',
-                  marginBottom: '30px',
-                }}
-                allowFullScreen
-                loading="lazy"
-              />
-            </div>
+        {/* Contact */}
+        <section className="container py-5">
+          <div className="mq-contact-card text-center">
+            <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '1.5rem' }}>Get a free quote</h2>
+            <p style={{ color: '#CFEFD8' }} className="mb-3">
+              Send us your device model and what's wrong. We'll reply with a price and a time.
+            </p>
+            <a href={PHONE_TEL} className="btn btn-start w-100 mb-2">Call {PHONE_DISPLAY}</a>
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline-light w-100 mq-rounded"
+            >
+              WhatsApp us
+            </a>
           </div>
         </section>
       </main>
+
+      {/* Sticky call bar on phones */}
+      <div className="mq-sticky-bar d-md-none">
+        <a href={PHONE_TEL}>Call now</a>
+        <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      </div>
     </>
   );
 };

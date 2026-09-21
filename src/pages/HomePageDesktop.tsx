@@ -362,413 +362,480 @@
 //     </>
 //   );
 // }
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faChevronRight,
-  faChevronLeft,
-  faArrowRight,
-  faLocationDot,
-  faPhone,
-  faEnvelope,
-} from '@fortawesome/free-solid-svg-icons';
-import Header from './Header';
-import {
-  PHONE_DISPLAY,
-  PHONE_TEL,
-  EMAIL,
-  ADDRESS_LINE_1,
-  ADDRESS_LINE_2,
-  MAPS_EMBED,
-  MAPS_URL,
-  HOURS,
-  DAY_NAMES,
-  WEEK_ORDER,
-  hhmm,
-  ukNow,
-  useOpenStatus,
-} from './pharmacyHours';
+import { faPhone, faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import './HomePageDesktop.css';
 
-/* ------------------------------------------------------------------ data */
+/* ------------------------------------------------------------------
+   Business details — replace the TODO placeholders before going live
+------------------------------------------------------------------- */
+const PHONE_DISPLAY = '07XXX XXX XXX';             // TODO
+const PHONE_TEL = 'tel:+447000000000';             // TODO
+const WHATSAPP_URL = 'https://wa.me/447000000000'; // TODO
 
-const NAV_LINKS: Record<string, string> = {
-  'All services': '/services?tab=ALL',
-  'Pharmacy First': '/services?tab=PHARMACY',
-  'NHS treatments': '/services?tab=NHS',
-  'Private treatments': '/services?tab=PRIVATE',
-};
+/* Images live in /public/images (cut from the flyer) */
+const IMG = '/images/';
 
-const heroSlides = [
-  {
-    tag: 'NHS',
-    title: 'Pharmacy First consultations',
-    link: '/services?tab=PHARMACY',
-    img: 'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fsinusitis.webp&w=1200&q=75',
-  },
-  {
-    tag: 'NHS',
-    title: 'Free flu & COVID vaccinations',
-    link: '/services?tab=NHS',
-    img: 'https://lead-services-agency.fra1.cdn.digitaloceanspaces.com/4/101404/2-EtcvQ5-J.webp',
-  },
-  {
-    tag: 'NHS',
-    title: 'Meningitis B vaccination',
-    link: '/services?tab=NHS',
-    img: 'https://lead-services-agency.fra1.cdn.digitaloceanspaces.com/4/542160/8ruIf7vdRW.webp',
-  },
-  {
-    tag: 'NHS',
-    title: 'Free blood pressure checks',
-    link: '/book/15',
-    img: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200&q=80&auto=format&fit=crop',
-  },
-  {
-    tag: 'NHS',
-    title: 'Oral contraception',
-    link: '/oral-contraceptives',
-    img: 'https://gpcdcgwgkciyogknekwp.supabase.co/storage/v1/object/public/pharmacy/pic.png',
-  },
+const services = [
+  { img: 'mqf-service-1.jpg', label: 'Screen repairs' },
+  { img: 'mqf-service-2.jpg', label: 'Battery replacement' },
+  { img: 'mqf-service-3.jpg', label: 'Water damage' },
+  { img: 'mqf-service-4.jpg', label: 'General repairs' },
+  { img: 'mqf-service-5.jpg', label: 'All mobile brands' },
+  { img: 'mqf-service-6.jpg', label: 'Charging port repair' },
 ];
 
-const popularServices = [
-  {
-    title: 'Blood Pressure Check',
-    link: '/book/15',
-    tag: 'NHS',
-    sub: 'Free check for over-40s, results while you wait.',
-    img: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80&auto=format&fit=crop',
-  },
-  {
-    title: 'Health Check',
-    link: '/health-check',
-    tag: 'NHS',
-    sub: 'A simple review of your overall health and risk factors.',
-    img: 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=800&q=80&auto=format&fit=crop',
-  },
-  {
-    title: 'Oral Contraception',
-    link: '/oral-contraceptives',
-    tag: 'NHS',
-    sub: 'Fast, confidential help when you need it.',
-    img: 'https://gpcdcgwgkciyogknekwp.supabase.co/storage/v1/object/public/pharmacy/pic.png',
-  },
-];
-
-const vaccinations = [
-  {
-    title: 'COVID vaccine',
-    link: '/book/16',
-    tag: 'NHS',
-    sub: 'Free COVID-19 booster for eligible patients (over 75).',
-    img: 'https://lead-services-agency.fra1.cdn.digitaloceanspaces.com/4/542160/8ruIf7vdRW.webp',
-  },
-  {
-    title: 'Flu jab',
-    link: '/book/14',
-    tag: 'NHS',
-    sub: 'Free NHS flu jab to keep you protected.',
-    img: 'https://lead-services-agency.fra1.cdn.digitaloceanspaces.com/4/101404/2-EtcvQ5-J.webp',
-  },
-  {
-    title: 'Private COVID-19 vaccination',
-    link: '/book/45',
-    tag: 'Private',
-    sub: '£75 per dose, no eligibility criteria.',
-    img: 'https://aylestonepharmacy.co.uk/wp-content/uploads/2025/10/senior-male-patient-getting-vaccinated-coronavirus-scaled.jpg',
-  },
-];
-
-const pharmacyFirst = [
-  { title: 'Sinusitis', link: '/book/21', subtitle: 'Ages 12+', img: 'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fsinusitis.webp&w=1200&q=75' },
-  { title: 'Sore throat', link: '/book/2', subtitle: 'Ages 5+', img: 'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fsore-throat.webp&w=1200&q=75' },
-  { title: 'Earache', link: '/book/19', subtitle: 'Ages 1–17', img: 'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fearache.webp&w=1200&q=75' },
-  { title: 'Infected insect bite', link: '/book/8', subtitle: 'Ages 1+', img: 'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Finsect-bite.webp&w=1200&q=75' },
-  { title: 'Impetigo', link: '/book/7', subtitle: 'Ages 1+', img: 'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fimpetigo.webp&w=1200&q=75' },
-  { title: 'Shingles', link: '/book/44', subtitle: 'Ages 18+', img: 'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fshingles.webp&w=1200&q=75' },
-  { title: 'Uncomplicated UTI (women)', link: '/book/5', subtitle: 'Women aged 16–64', img: 'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Futi.webp&w=1200&q=75' },
-];
-
-/* ------------------------------------------------------------- component */
-
-export default function HomePageDesktop() {
-  const navigate = useNavigate();
-  const [sel, setSel] = useState('');
-  const [slide, setSlide] = useState(0);
-  const [pfIndex, setPfIndex] = useState(0);
-  const paused = useRef(false);
-  const status = useOpenStatus();
-  const uk = ukNow();
-
-  const maxIndex = Math.max(0, pharmacyFirst.length - 3);
-
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const id = window.setInterval(() => {
-      if (!paused.current) setSlide(s => (s + 1) % heroSlides.length);
-    }, 3000);
-    return () => window.clearInterval(id);
-  }, []);
-
-  const go = () => navigate(NAV_LINKS[sel] || NAV_LINKS['All services']);
-
-  const card = (svc: { title: string; link: string; tag: string; sub: string; img: string }) => (
-    <article
-      key={svc.title}
-      className="cp-svc"
-      role="link"
-      tabIndex={0}
-      onClick={() => navigate(svc.link)}
-      onKeyDown={e => { if (e.key === 'Enter') navigate(svc.link); }}
-    >
-      <div className="cp-svc-img"><img src={svc.img} alt={svc.title} loading="lazy" /></div>
-      <div className="cp-svc-body">
-        <span className={svc.tag === 'NHS' ? 'cp-tag cp-tag-nhs' : 'cp-tag cp-tag-private'}>
-          {svc.tag}
-        </span>
-        <h3>{svc.title}</h3>
-        <p>{svc.sub}</p>
-      </div>
-    </article>
-  );
-
+export default function MobileQuickFix() {
   return (
-    <div className="cp-page">
-      <Header />
+    <div className="mq-page">
+      <h1 className="mq-sr">Mobile Quick Fix: fast, reliable, professional phone repairs at your door</h1>
 
-      {/* ---------------------------------------------------------- hero */}
-      <section className="cp-hero">
-        <div className="cp-shell">
-          <div>
-            <div className="cp-locpill"><i />92 Windmill Ln, Castlecroft WV3 8HG</div>
+      {/* Desktop and tablet: the flyer exactly as designed */}
+      <section className="mq-flyer">
+        <img
+          src={`${IMG}mqf-flyer.jpg`}
+          alt="Mobile Quick Fix. Screen repairs, battery replacement, water damage, general repairs, all mobile brands and charging port repair for phones, tablets, laptops and gaming consoles. We come to your door for repair."
+        />
+      </section>
 
-            <h1>
-              <span className="cp-line">
-                Your{' '}
-                <span className="cp-underline">
-                  Trusted
-                  <svg viewBox="0 0 300 14" preserveAspectRatio="none" aria-hidden="true">
-                    <path d="M3 10 C 70 2, 190 2, 297 7" fill="none" stroke="#00D364" strokeWidth="7" strokeLinecap="round" />
-                  </svg>
-                </span>
-              </span>
-              <span className="cp-line">Pharmacy in Castlecroft.</span>
-              <span className="cp-line">
-                <span className="cp-nhs">NHS</span> <span className="cp-amp">&amp;</span>{' '}
-                <span className="cp-priv">Private</span> Care.
-              </span>
-            </h1>
+      {/* Phones: the same flyer cut into pieces and stacked */}
+      <section className="mq-stack">
+        <img className="mq-logo" src={`${IMG}mqf-logo.jpg`} alt="Mobile Quick Fix. Fast, reliable, professional." />
+        <img className="mq-script" src={`${IMG}mqf-script.jpg`} alt="Get your device back in no time!" />
 
-            <p className="cp-hero-sub">
-              Pharmacy First, vaccinations and free <b>NHS services</b> on Windmill Lane.
-              Here for the whole of Castlecroft.
-            </p>
+        <ul className="mq-services">
+          {services.map(s => (
+            <li key={s.img}><img src={`${IMG}${s.img}`} alt={s.label} /></li>
+          ))}
+        </ul>
 
-            <div className="cp-picker">
-              <select
-                aria-label="Choose a service"
-                value={sel}
-                onChange={e => setSel(e.target.value)}
-              >
-                <option value="">Choose a service</option>
-                {Object.keys(NAV_LINKS).map(o => <option key={o} value={o}>{o}</option>)}
-              </select>
-              <button className="cp-go" onClick={go}>
-                Get Started <FontAwesomeIcon icon={faArrowRight} />
-              </button>
-            </div>
+        <img className="mq-strip" src={`${IMG}mqf-brands.jpg`} alt="We repair Apple, Samsung, Xiaomi, Huawei, Oppo, OnePlus and Motorola" />
+        <img className="mq-strip" src={`${IMG}mqf-categories.jpg`} alt="Phones, tablets, laptops, gaming consoles" />
 
-            <div className="cp-rating">
-              <div className="cp-avatars">
-                <span style={{ background: '#BFEFD6' }}>S</span>
-                <span style={{ background: '#BBD5F5' }}>J</span>
-                <span style={{ background: '#F6DFB0' }}>A</span>
-              </div>
-              <span className="cp-stars">★★★★★</span>
-              <span className="cp-rating-text">· rated <b>5.0</b> on Google</span>
-            </div>
-          </div>
-
-          <div
-            className="cp-showcase"
-            onMouseEnter={() => { paused.current = true; }}
-            onMouseLeave={() => { paused.current = false; }}
-          >
-            <div className="cp-welcome">👋 Welcome to Castlecroft Pharmacy</div>
-            <div className="cp-slides">
-              {heroSlides.map((s, i) => (
-                <div
-                  key={s.title}
-                  className={i === slide ? 'cp-slide is-active' : 'cp-slide'}
-                  aria-hidden={i !== slide}
-                  onClick={() => navigate(s.link)}
-                >
-                  <img src={s.img} alt={s.title} />
-                  <div className="cp-slide-veil" />
-                  <div className="cp-slide-copy">
-                    <div className="cp-eyebrow">{s.tag}</div>
-                    <h3>{s.title}</h3>
-                    <span>Find out more <FontAwesomeIcon icon={faArrowRight} /></span>
-                  </div>
-                </div>
-              ))}
-              <div className="cp-dots">
-                {heroSlides.map((s, i) => (
-                  <button
-                    key={s.title}
-                    className={i === slide ? 'is-active' : ''}
-                    onClick={() => setSlide(i)}
-                    aria-label={`Show ${s.title}`}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
+        <div className="mq-green">
+          <img className="mq-house" src={`${IMG}mqf-house.jpg`} alt="" />
+          <img className="mq-devices" src={`${IMG}mqf-devices.jpg`} alt="We come to your door for repair!" />
         </div>
       </section>
 
-      {/* ---------------------------------------------- popular services */}
-      <section className="cp-section">
-        <div className="cp-shell">
-          <div className="cp-head">
-            <div>
-              <h2>Popular services</h2>
-              <p>Book online in a couple of minutes, or call us and we'll find you a slot.</p>
-            </div>
-            <button className="cp-link" onClick={() => navigate('/services')}>See all services</button>
-          </div>
-          <div className="cp-grid">{popularServices.map(card)}</div>
-        </div>
-      </section>
-
-      {/* ----------------------------------------------- pharmacy first */}
-      <section className="cp-section">
-        <div className="cp-shell">
-         <div className="cp-pf-band">
-          <div className="cp-head">
-            <div>
-              <h2>Pharmacy First treatments</h2>
-              <p>Common conditions treated free on the NHS — no GP appointment needed.</p>
-            </div>
-            <div className="cp-rail-controls">
-              <button onClick={() => setPfIndex(i => Math.max(0, i - 1))} disabled={pfIndex === 0} aria-label="Previous">
-                <FontAwesomeIcon icon={faChevronLeft} />
-              </button>
-              <button onClick={() => setPfIndex(i => Math.min(maxIndex, i + 1))} disabled={pfIndex >= maxIndex} aria-label="Next">
-                <FontAwesomeIcon icon={faChevronRight} />
-              </button>
-            </div>
-          </div>
-          <div className="cp-viewport">
-            <div className="cp-track" style={{ transform: `translateX(-${pfIndex * 276}px)` }}>
-              {pharmacyFirst.map(svc => (
-                <article key={svc.title} className="cp-pf" onClick={() => navigate(svc.link)}>
-                  <div className="cp-pf-img"><img src={svc.img} alt={svc.title} loading="lazy" /></div>
-                  <div className="cp-pf-body">
-                    <h3>{svc.title}</h3>
-                    <small>{svc.subtitle}</small>
-                    <button className="cp-pf-btn">Get started</button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-         </div>
-        </div>
-      </section>
-
-      {/* ------------------------------------------------- vaccinations */}
-      <section className="cp-section">
-        <div className="cp-shell">
-          <div className="cp-head">
-            <div>
-              <h2>Flu &amp; COVID vaccinations</h2>
-              <p>Free on the NHS if you're eligible, private appointments if you're not.</p>
-            </div>
-          </div>
-          <div className="cp-grid">{vaccinations.map(card)}</div>
-        </div>
-      </section>
-
-      {/* ------------------------------------------------------ find us */}
-      <section className="cp-section cp-section-alt">
-        <div className="cp-shell">
-          <div className="cp-findcard">
-            <div className="cp-find-info">
-              <h2>Find us</h2>
-              <p className="cp-find-lead">
-                We're on Windmill Lane in the heart of Castlecroft. Walk in for advice,
-                or book ahead and we'll have a private consultation room ready.
-              </p>
-
-              <ul className="cp-contact">
-                <li>
-                  <span className="cp-contact-ico"><FontAwesomeIcon icon={faLocationDot} /></span>
-                  <div>
-                    <strong>{ADDRESS_LINE_1}</strong>
-                    <span>{ADDRESS_LINE_2}</span>
-                  </div>
-                </li>
-                <li>
-                  <span className="cp-contact-ico"><FontAwesomeIcon icon={faPhone} /></span>
-                  <div>
-                    <strong><a href={PHONE_TEL}>{PHONE_DISPLAY}</a></strong>
-                    <span>Speak to the pharmacy team</span>
-                  </div>
-                </li>
-                <li>
-                  <span className="cp-contact-ico"><FontAwesomeIcon icon={faEnvelope} /></span>
-                  <div>
-                    <strong><a href={`mailto:${EMAIL}`}>{EMAIL}</a></strong>
-                    <span>We aim to reply the same working day</span>
-                  </div>
-                </li>
-              </ul>
-
-              <div className="cp-hours">
-                <div className="cp-hours-top">
-                  <h3>Opening hours</h3>
-                  <span className={status.open ? 'cp-status' : 'cp-status is-closed'}>
-                    <i />{status.open ? 'Open now' : 'Closed now'}
-                  </span>
-                </div>
-                <ul>
-                  {WEEK_ORDER.map(d => {
-                    const h = HOURS[d];
-                    return (
-                      <li key={d} className={d === uk.day ? 'is-today' : ''}>
-                        <span>{DAY_NAMES[d]}</span>
-                        <span>{h ? `${hhmm(h[0])} – ${hhmm(h[1])}` : 'Closed'}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-
-              <div className="cp-find-actions">
-                <a className="cp-btn-primary" href={MAPS_URL} target="_blank" rel="noreferrer">
-                  Get directions <FontAwesomeIcon icon={faArrowRight} />
-                </a>
-                <a className="cp-btn-ghost" href={PHONE_TEL}>Call the pharmacy</a>
-              </div>
-            </div>
-
-            <div className="cp-find-map">
-              <iframe
-                title="Castlecroft Pharmacy location"
-                src={MAPS_EMBED}
-                allowFullScreen
-                loading="lazy"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
+      <div className="mq-contactbar">
+        <a href={PHONE_TEL} className="mq-cta"><FontAwesomeIcon icon={faPhone} /> Call {PHONE_DISPLAY}</a>
+        <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" className="mq-cta mq-cta-ghost">
+          <FontAwesomeIcon icon={faCommentDots} /> WhatsApp for a quote
+        </a>
+      </div>
     </div>
   );
 }
+
+// import React, { useState, useEffect, useRef } from 'react';
+// import { useNavigate } from 'react-router-dom';
+// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+// import {
+//   faChevronRight,
+//   faChevronLeft,
+//   faArrowRight,
+//   faLocationDot,
+//   faPhone,
+//   faEnvelope,
+// } from '@fortawesome/free-solid-svg-icons';
+// import Header from './Header';
+// import {
+//   PHONE_DISPLAY,
+//   PHONE_TEL,
+//   EMAIL,
+//   ADDRESS_LINE_1,
+//   ADDRESS_LINE_2,
+//   MAPS_EMBED,
+//   MAPS_URL,
+//   HOURS,
+//   DAY_NAMES,
+//   WEEK_ORDER,
+//   hhmm,
+//   ukNow,
+//   useOpenStatus,
+// } from './pharmacyHours';
+// import './HomePageDesktop.css';
+
+// /* ------------------------------------------------------------------ data */
+
+// const NAV_LINKS: Record<string, string> = {
+//   'All services': '/services?tab=ALL',
+//   'Pharmacy First': '/services?tab=PHARMACY',
+//   'NHS treatments': '/services?tab=NHS',
+//   'Private treatments': '/services?tab=PRIVATE',
+// };
+
+// const heroSlides = [
+//   {
+//     tag: 'NHS',
+//     title: 'Pharmacy First consultations',
+//     link: '/services?tab=PHARMACY',
+//     img: 'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fsinusitis.webp&w=1200&q=75',
+//   },
+//   {
+//     tag: 'NHS',
+//     title: 'Free flu & COVID vaccinations',
+//     link: '/services?tab=NHS',
+//     img: 'https://lead-services-agency.fra1.cdn.digitaloceanspaces.com/4/101404/2-EtcvQ5-J.webp',
+//   },
+//   {
+//     tag: 'NHS',
+//     title: 'Meningitis B vaccination',
+//     link: '/services?tab=NHS',
+//     img: 'https://lead-services-agency.fra1.cdn.digitaloceanspaces.com/4/542160/8ruIf7vdRW.webp',
+//   },
+//   {
+//     tag: 'NHS',
+//     title: 'Free blood pressure checks',
+//     link: '/book/15',
+//     img: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200&q=80&auto=format&fit=crop',
+//   },
+//   {
+//     tag: 'NHS',
+//     title: 'Oral contraception',
+//     link: '/oral-contraceptives',
+//     img: 'https://gpcdcgwgkciyogknekwp.supabase.co/storage/v1/object/public/pharmacy/pic.png',
+//   },
+// ];
+
+// const popularServices = [
+//   {
+//     title: 'Blood Pressure Check',
+//     link: '/book/15',
+//     tag: 'NHS',
+//     sub: 'Free check for over-40s, results while you wait.',
+//     img: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80&auto=format&fit=crop',
+//   },
+//   {
+//     title: 'Health Check',
+//     link: '/health-check',
+//     tag: 'NHS',
+//     sub: 'A simple review of your overall health and risk factors.',
+//     img: 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=800&q=80&auto=format&fit=crop',
+//   },
+//   {
+//     title: 'Oral Contraception',
+//     link: '/oral-contraceptives',
+//     tag: 'NHS',
+//     sub: 'Fast, confidential help when you need it.',
+//     img: 'https://gpcdcgwgkciyogknekwp.supabase.co/storage/v1/object/public/pharmacy/pic.png',
+//   },
+// ];
+
+// const vaccinations = [
+//   {
+//     title: 'COVID vaccine',
+//     link: '/book/16',
+//     tag: 'NHS',
+//     sub: 'Free COVID-19 booster for eligible patients (over 75).',
+//     img: 'https://lead-services-agency.fra1.cdn.digitaloceanspaces.com/4/542160/8ruIf7vdRW.webp',
+//   },
+//   {
+//     title: 'Flu jab',
+//     link: '/book/14',
+//     tag: 'NHS',
+//     sub: 'Free NHS flu jab to keep you protected.',
+//     img: 'https://lead-services-agency.fra1.cdn.digitaloceanspaces.com/4/101404/2-EtcvQ5-J.webp',
+//   },
+//   {
+//     title: 'Private COVID-19 vaccination',
+//     link: '/book/45',
+//     tag: 'Private',
+//     sub: '£75 per dose, no eligibility criteria.',
+//     img: 'https://aylestonepharmacy.co.uk/wp-content/uploads/2025/10/senior-male-patient-getting-vaccinated-coronavirus-scaled.jpg',
+//   },
+// ];
+
+// const pharmacyFirst = [
+//   { title: 'Sinusitis', link: '/book/21', subtitle: 'Ages 12+', img: 'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fsinusitis.webp&w=1200&q=75' },
+//   { title: 'Sore throat', link: '/book/2', subtitle: 'Ages 5+', img: 'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fsore-throat.webp&w=1200&q=75' },
+//   { title: 'Earache', link: '/book/19', subtitle: 'Ages 1–17', img: 'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fearache.webp&w=1200&q=75' },
+//   { title: 'Infected insect bite', link: '/book/8', subtitle: 'Ages 1+', img: 'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Finsect-bite.webp&w=1200&q=75' },
+//   { title: 'Impetigo', link: '/book/7', subtitle: 'Ages 1+', img: 'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fimpetigo.webp&w=1200&q=75' },
+//   { title: 'Shingles', link: '/book/44', subtitle: 'Ages 18+', img: 'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Fshingles.webp&w=1200&q=75' },
+//   { title: 'Uncomplicated UTI (women)', link: '/book/5', subtitle: 'Women aged 16–64', img: 'https://www.chathampharmacy.co.uk/_next/image?url=%2Fimages%2Fpharmacy-first%2Futi.webp&w=1200&q=75' },
+// ];
+
+// /* ------------------------------------------------------------- component */
+
+// export default function HomePageDesktop() {
+//   const navigate = useNavigate();
+//   const [sel, setSel] = useState('');
+//   const [slide, setSlide] = useState(0);
+//   const [pfIndex, setPfIndex] = useState(0);
+//   const paused = useRef(false);
+//   const status = useOpenStatus();
+//   const uk = ukNow();
+
+//   const maxIndex = Math.max(0, pharmacyFirst.length - 3);
+
+//   useEffect(() => {
+//     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+//     const id = window.setInterval(() => {
+//       if (!paused.current) setSlide(s => (s + 1) % heroSlides.length);
+//     }, 3000);
+//     return () => window.clearInterval(id);
+//   }, []);
+
+//   const go = () => navigate(NAV_LINKS[sel] || NAV_LINKS['All services']);
+
+//   const card = (svc: { title: string; link: string; tag: string; sub: string; img: string }) => (
+//     <article
+//       key={svc.title}
+//       className="cp-svc"
+//       role="link"
+//       tabIndex={0}
+//       onClick={() => navigate(svc.link)}
+//       onKeyDown={e => { if (e.key === 'Enter') navigate(svc.link); }}
+//     >
+//       <div className="cp-svc-img"><img src={svc.img} alt={svc.title} loading="lazy" /></div>
+//       <div className="cp-svc-body">
+//         <span className={svc.tag === 'NHS' ? 'cp-tag cp-tag-nhs' : 'cp-tag cp-tag-private'}>
+//           {svc.tag}
+//         </span>
+//         <h3>{svc.title}</h3>
+//         <p>{svc.sub}</p>
+//       </div>
+//     </article>
+//   );
+
+//   return (
+//     <div className="cp-page">
+//       <Header />
+
+//       {/* ---------------------------------------------------------- hero */}
+//       <section className="cp-hero">
+//         <div className="cp-shell">
+//           <div>
+//             <div className="cp-locpill"><i />92 Windmill Ln, Castlecroft WV3 8HG</div>
+
+//             <h1>
+//               <span className="cp-line">
+//                 Your{' '}
+//                 <span className="cp-underline">
+//                   Trusted
+//                   <svg viewBox="0 0 300 14" preserveAspectRatio="none" aria-hidden="true">
+//                     <path d="M3 10 C 70 2, 190 2, 297 7" fill="none" stroke="#00D364" strokeWidth="7" strokeLinecap="round" />
+//                   </svg>
+//                 </span>
+//               </span>
+//               <span className="cp-line">Pharmacy in Castlecroft.</span>
+//               <span className="cp-line">
+//                 <span className="cp-nhs">NHS</span> <span className="cp-amp">&amp;</span>{' '}
+//                 <span className="cp-priv">Private</span> Care.
+//               </span>
+//             </h1>
+
+//             <p className="cp-hero-sub">
+//               Pharmacy First, vaccinations and free <b>NHS services</b> on Windmill Lane.
+//               Here for the whole of Castlecroft.
+//             </p>
+
+//             <div className="cp-picker">
+//               <select
+//                 aria-label="Choose a service"
+//                 value={sel}
+//                 onChange={e => setSel(e.target.value)}
+//               >
+//                 <option value="">Choose a service</option>
+//                 {Object.keys(NAV_LINKS).map(o => <option key={o} value={o}>{o}</option>)}
+//               </select>
+//               <button className="cp-go" onClick={go}>
+//                 Get Started <FontAwesomeIcon icon={faArrowRight} />
+//               </button>
+//             </div>
+
+//             <div className="cp-rating">
+//               <div className="cp-avatars">
+//                 <span style={{ background: '#BFEFD6' }}>S</span>
+//                 <span style={{ background: '#BBD5F5' }}>J</span>
+//                 <span style={{ background: '#F6DFB0' }}>A</span>
+//               </div>
+//               <span className="cp-stars">★★★★★</span>
+//               <span className="cp-rating-text">· rated <b>5.0</b> on Google</span>
+//             </div>
+//           </div>
+
+//           <div
+//             className="cp-showcase"
+//             onMouseEnter={() => { paused.current = true; }}
+//             onMouseLeave={() => { paused.current = false; }}
+//           >
+//             <div className="cp-welcome">👋 Welcome to Castlecroft Pharmacy</div>
+//             <div className="cp-slides">
+//               {heroSlides.map((s, i) => (
+//                 <div
+//                   key={s.title}
+//                   className={i === slide ? 'cp-slide is-active' : 'cp-slide'}
+//                   aria-hidden={i !== slide}
+//                   onClick={() => navigate(s.link)}
+//                 >
+//                   <img src={s.img} alt={s.title} />
+//                   <div className="cp-slide-veil" />
+//                   <div className="cp-slide-copy">
+//                     <div className="cp-eyebrow">{s.tag}</div>
+//                     <h3>{s.title}</h3>
+//                     <span>Find out more <FontAwesomeIcon icon={faArrowRight} /></span>
+//                   </div>
+//                 </div>
+//               ))}
+//               <div className="cp-dots">
+//                 {heroSlides.map((s, i) => (
+//                   <button
+//                     key={s.title}
+//                     className={i === slide ? 'is-active' : ''}
+//                     onClick={() => setSlide(i)}
+//                     aria-label={`Show ${s.title}`}
+//                   />
+//                 ))}
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       </section>
+
+//       {/* ---------------------------------------------- popular services */}
+//       <section className="cp-section">
+//         <div className="cp-shell">
+//           <div className="cp-head">
+//             <div>
+//               <h2>Popular services</h2>
+//               <p>Book online in a couple of minutes, or call us and we'll find you a slot.</p>
+//             </div>
+//             <button className="cp-link" onClick={() => navigate('/services')}>See all services</button>
+//           </div>
+//           <div className="cp-grid">{popularServices.map(card)}</div>
+//         </div>
+//       </section>
+
+//       {/* ----------------------------------------------- pharmacy first */}
+//       <section className="cp-section">
+//         <div className="cp-shell">
+//          <div className="cp-pf-band">
+//           <div className="cp-head">
+//             <div>
+//               <h2>Pharmacy First treatments</h2>
+//               <p>Common conditions treated free on the NHS — no GP appointment needed.</p>
+//             </div>
+//             <div className="cp-rail-controls">
+//               <button onClick={() => setPfIndex(i => Math.max(0, i - 1))} disabled={pfIndex === 0} aria-label="Previous">
+//                 <FontAwesomeIcon icon={faChevronLeft} />
+//               </button>
+//               <button onClick={() => setPfIndex(i => Math.min(maxIndex, i + 1))} disabled={pfIndex >= maxIndex} aria-label="Next">
+//                 <FontAwesomeIcon icon={faChevronRight} />
+//               </button>
+//             </div>
+//           </div>
+//           <div className="cp-viewport">
+//             <div className="cp-track" style={{ transform: `translateX(-${pfIndex * 276}px)` }}>
+//               {pharmacyFirst.map(svc => (
+//                 <article key={svc.title} className="cp-pf" onClick={() => navigate(svc.link)}>
+//                   <div className="cp-pf-img"><img src={svc.img} alt={svc.title} loading="lazy" /></div>
+//                   <div className="cp-pf-body">
+//                     <h3>{svc.title}</h3>
+//                     <small>{svc.subtitle}</small>
+//                     <button className="cp-pf-btn">Get started</button>
+//                   </div>
+//                 </article>
+//               ))}
+//             </div>
+//           </div>
+//          </div>
+//         </div>
+//       </section>
+
+//       {/* ------------------------------------------------- vaccinations */}
+//       <section className="cp-section">
+//         <div className="cp-shell">
+//           <div className="cp-head">
+//             <div>
+//               <h2>Flu &amp; COVID vaccinations</h2>
+//               <p>Free on the NHS if you're eligible, private appointments if you're not.</p>
+//             </div>
+//           </div>
+//           <div className="cp-grid">{vaccinations.map(card)}</div>
+//         </div>
+//       </section>
+
+//       {/* ------------------------------------------------------ find us */}
+//       <section className="cp-section cp-section-alt">
+//         <div className="cp-shell">
+//           <div className="cp-findcard">
+//             <div className="cp-find-info">
+//               <h2>Find us</h2>
+//               <p className="cp-find-lead">
+//                 We're on Windmill Lane in the heart of Castlecroft. Walk in for advice,
+//                 or book ahead and we'll have a private consultation room ready.
+//               </p>
+
+//               <ul className="cp-contact">
+//                 <li>
+//                   <span className="cp-contact-ico"><FontAwesomeIcon icon={faLocationDot} /></span>
+//                   <div>
+//                     <strong>{ADDRESS_LINE_1}</strong>
+//                     <span>{ADDRESS_LINE_2}</span>
+//                   </div>
+//                 </li>
+//                 <li>
+//                   <span className="cp-contact-ico"><FontAwesomeIcon icon={faPhone} /></span>
+//                   <div>
+//                     <strong><a href={PHONE_TEL}>{PHONE_DISPLAY}</a></strong>
+//                     <span>Speak to the pharmacy team</span>
+//                   </div>
+//                 </li>
+//                 <li>
+//                   <span className="cp-contact-ico"><FontAwesomeIcon icon={faEnvelope} /></span>
+//                   <div>
+//                     <strong><a href={`mailto:${EMAIL}`}>{EMAIL}</a></strong>
+//                     <span>We aim to reply the same working day</span>
+//                   </div>
+//                 </li>
+//               </ul>
+
+//               <div className="cp-hours">
+//                 <div className="cp-hours-top">
+//                   <h3>Opening hours</h3>
+//                   <span className={status.open ? 'cp-status' : 'cp-status is-closed'}>
+//                     <i />{status.open ? 'Open now' : 'Closed now'}
+//                   </span>
+//                 </div>
+//                 <ul>
+//                   {WEEK_ORDER.map(d => {
+//                     const h = HOURS[d];
+//                     return (
+//                       <li key={d} className={d === uk.day ? 'is-today' : ''}>
+//                         <span>{DAY_NAMES[d]}</span>
+//                         <span>{h ? `${hhmm(h[0])} – ${hhmm(h[1])}` : 'Closed'}</span>
+//                       </li>
+//                     );
+//                   })}
+//                 </ul>
+//               </div>
+
+//               <div className="cp-find-actions">
+//                 <a className="cp-btn-primary" href={MAPS_URL} target="_blank" rel="noreferrer">
+//                   Get directions <FontAwesomeIcon icon={faArrowRight} />
+//                 </a>
+//                 <a className="cp-btn-ghost" href={PHONE_TEL}>Call the pharmacy</a>
+//               </div>
+//             </div>
+
+//             <div className="cp-find-map">
+//               <iframe
+//                 title="Castlecroft Pharmacy location"
+//                 src={MAPS_EMBED}
+//                 allowFullScreen
+//                 loading="lazy"
+//               />
+//             </div>
+//           </div>
+//         </div>
+//       </section>
+//     </div>
+//   );
+// }
 
 // import React, { useState } from 'react';
 // import { useNavigate } from 'react-router-dom';
