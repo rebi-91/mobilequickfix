@@ -797,9 +797,9 @@ const ACCENT_COLOR = '#1E9E34';
 /* ------------------------------------------------------------------
    Business details — replace the TODO placeholders before going live
 ------------------------------------------------------------------- */
-const PHONE_DISPLAY = '07XXX XXX XXX';             // TODO
-const PHONE_TEL = 'tel:+447000000000';             // TODO
-const WHATSAPP_URL = 'https://wa.me/447000000000'; // TODO
+const PHONE_DISPLAY = '07572 424207';
+const PHONE_TEL = 'tel:+447572424207';
+const WHATSAPP_URL = 'https://wa.me/447572424207';
 
 /* Images cut from the flyer, stored in /public/images */
 const IMG = '/images/';
