@@ -362,72 +362,1232 @@
 //     </>
 //   );
 // }
-import React from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPhone, faCommentDots } from '@fortawesome/free-solid-svg-icons';
-import './HomePageDesktop.css';
+// / <reference types="vite/client" />
 
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faMobileScreenButton,
+  faLaptop,
+  faTabletScreenButton,
+  faGamepad,
+  faMagnifyingGlass,
+  faArrowLeft,
+  faXmark,
+  faPhone,
+  faCommentDots,
+  faChevronRight,
+  faFolder,
+  faMapLocationDot,
+  faGear,
+  faCalendarDays,
+  faCamera,
+  faImage,
+  faClock,
+  faCompass,
+  faBook,
+  faLanguage,
+  faHeartPulse,
+  faNoteSticky,
+  faMusic,
+  faKey,
+  faEnvelope,
+  faSignal,
+  faWifi,
+  IconDefinition,
+} from '@fortawesome/free-solid-svg-icons';
+import './HomePageDesktop.css';
+import { cleanImage, CleanMode } from './cleanImage';
 /* ------------------------------------------------------------------
-   Business details — replace the TODO placeholders before going live
+   Business details
 ------------------------------------------------------------------- */
 const PHONE_DISPLAY = '07572 424207';
 const PHONE_TEL = 'tel:+447572424207';
-const WHATSAPP_URL = 'https://wa.me/447572424207';
+const WHATSAPP_NUMBER = '447572424207';
 
-/* Images live in /public/images (cut from the flyer) */
-const IMG = '/images/';
+/* ------------------------------------------------------------------
+   Devices, brands and repairs
+------------------------------------------------------------------- */
+type DeviceKey = 'phone' | 'macbook' | 'tablet' | 'laptop' | 'console';
 
-const services = [
-  { img: 'mqf-service-1.jpg', label: 'Screen repairs' },
-  { img: 'mqf-service-2.jpg', label: 'Battery replacement' },
-  { img: 'mqf-service-3.jpg', label: 'Water damage' },
-  { img: 'mqf-service-4.jpg', label: 'General repairs' },
-  { img: 'mqf-service-5.jpg', label: 'All mobile brands' },
-  { img: 'mqf-service-6.jpg', label: 'Charging port repair' },
+const DEVICES: { key: DeviceKey; label: string; icon: IconDefinition; modelHint: string }[] = [
+  { key: 'macbook', label: 'MacBook', icon: faLaptop, modelHint: 'e.g. MacBook Air M1 2020' },
+  { key: 'phone', label: 'Smartphone', icon: faMobileScreenButton, modelHint: 'e.g. iPhone 13 or Galaxy S22' },
+  { key: 'tablet', label: 'Tablet', icon: faTabletScreenButton, modelHint: 'e.g. iPad 9th gen or Galaxy Tab A8' },
+  { key: 'laptop', label: 'Laptop', icon: faLaptop, modelHint: 'e.g. HP Pavilion 15 or Dell XPS 13' },
+  { key: 'console', label: 'Console', icon: faGamepad, modelHint: 'e.g. PS5, Switch OLED or Xbox Series X' },
 ];
 
-export default function MobileQuickFix() {
+const BRANDS: Record<DeviceKey, string[]> = {
+  phone: [
+    'Apple', 'Google', 'Samsung', 'Huawei', 'Oppo', 'OnePlus', 'Motorola', 'Honor',
+    'Asus', 'Blackview', 'Cubot', 'Doogee', 'Infinix', 'Realme', 'Tecno', 'Ulefone',
+    'Nokia', 'LG', 'Vivo', 'Vodafone', 'TCL', 'Xiaomi', 'Sony',
+  ],
+  macbook: ['MacBook Air', 'MacBook Pro'],
+  tablet: ['Apple', 'Samsung', 'Amazon', 'Honor', 'Xiaomi', 'Lenovo'],
+  laptop: ['HP', 'Lenovo', 'Samsung', 'Microsoft', 'Alienware', 'Huawei', 'Razer', 'Acer', 'Asus', 'Dell', 'MSI'],
+  console: ['Sony PlayStation', 'Nintendo', 'Microsoft Xbox'],
+};
+
+type Repair = { key: string; label: string; sub: string };
+
+/* Each key is also the price column name in that gadget's Supabase table */
+const REPAIRS: Record<DeviceKey, Repair[]> = {
+  phone: [
+    { key: 'screen', label: 'Screen Repair (Standard)', sub: 'Cracked, black or not responding to touch' },
+    { key: 'oled', label: 'Soft OLED Screen Replacement', sub: 'Premium OLED screen that matches originals colour, brightness and feel' },
+    { key: 'battery', label: 'Battery replacement', sub: 'Drains fast or switches off early' },
+    { key: 'charging', label: 'Charging port', sub: 'Loose cable, slow or no charging' },
+    { key: 'water', label: 'Water damage', sub: 'Dropped in water or had a spill' },
+    { key: 'backglass', label: 'Back Glass', sub: 'Cracked back panel' },
+    { key: 'camera', label: 'Back Camera', sub: 'Blurry, cracked lens or not working' },
+  ],
+  tablet: [
+    { key: 'screen', label: 'Screen Repair', sub: 'Cracked, black or not responding to touch' },
+    { key: 'battery', label: 'Battery replacement', sub: 'Drains fast or switches off early' },
+    { key: 'charging', label: 'Charging port', sub: 'Loose cable, slow or no charging' },
+    { key: 'water', label: 'Water damage', sub: 'Dropped in water or had a spill' },
+    { key: 'housing', label: 'Housing', sub: 'Cracked back panel' },
+    { key: 'camera', label: 'Camera', sub: 'Blurry, cracked lens or not working' },
+  ],
+  macbook: [
+    { key: 'screen', label: 'Screen Repair', sub: '' },
+    { key: 'battery', label: 'Battery replacement', sub: 'Drains fast or switches off early' },
+    { key: 'charging', label: 'Charging port', sub: 'Loose cable, slow or no charging' },
+    { key: 'water', label: 'Water damage', sub: 'Dropped in water or had a spill' },
+    { key: 'camera', label: 'Camera', sub: 'Blurry, cracked lens or not working' },
+  ],
+  laptop: [
+    { key: 'screen', label: 'Screen Repair', sub: '' },
+    { key: 'battery', label: 'Battery replacement', sub: 'Drains fast or switches off early' },
+    { key: 'charging', label: 'Charging port', sub: 'Loose cable, slow or no charging' },
+    { key: 'water', label: 'Water damage', sub: 'Dropped in water or had a spill' },
+    { key: 'camera', label: 'Camera', sub: 'Blurry, cracked lens or not working' },
+  ],
+  console: [
+    { key: 'hdmi', label: 'HDMI port', sub: 'No picture on the TV' },
+    { key: 'overheating', label: 'Overheating or loud fan', sub: 'Clean, repaste and service' },
+    { key: 'disc', label: 'Disc Drive repair', sub: 'Won’t read or eject discs' },
+    { key: 'controller', label: 'Controller', sub: 'Stick drift or buttons not working' },
+    { key: 'charging', label: 'Charging or USB port', sub: 'Won’t charge or connect' },
+    { key: 'power', label: 'Power supply/No Power supply', sub: 'No lights, no power' },
+  ],
+};
+
+/* Heading on the blue bar above the repair list */
+const REPAIR_GROUP_TITLE: Record<DeviceKey, string> = {
+  phone: 'Common repairs',
+  tablet: 'Common repairs',
+  macbook: 'Common repairs',
+  laptop: 'Common repairs',
+  console: 'Game console repairs',
+};
+
+/* ------------------------------------------------------------------
+   PRICES come from Supabase: one table per gadget type.
+   Each row is one model (brand + model), each repair key is a column.
+   An empty price shows as "Price on request".
+   A table that doesn't exist yet (e.g. tablet) just shows
+   "Price on request" for everything.
+------------------------------------------------------------------- */
+const PRICE_TABLES: Record<DeviceKey, string> = {
+  phone: 'smartphone',
+  tablet: 'tablet',
+  macbook: 'macbook',
+  laptop: 'laptop',
+  console: 'console',
+};
+
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.replace(/\/+$/, '');
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+
+type Prices = Record<string, number>;
+
+async function fetchPrices(device: DeviceKey, brand: string, model: string): Promise<Prices> {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return {};
+  const url =
+    `${SUPABASE_URL}/rest/v1/${PRICE_TABLES[device]}?select=*` +
+    `&brand=eq.${encodeURIComponent(brand)}&model=eq.${encodeURIComponent(model)}&limit=1`;
+  const headers: Record<string, string> = { apikey: SUPABASE_KEY };
+  if (SUPABASE_KEY.startsWith('eyJ')) headers.Authorization = `Bearer ${SUPABASE_KEY}`;
+
+  const res = await fetch(url, { headers });
+  if (!res.ok) return {};
+  const [row] = (await res.json()) as Record<string, unknown>[];
+  const prices: Prices = {};
+  if (!row) return prices;
+  for (const { key } of REPAIRS[device]) {
+    const value = row[key];
+    if (value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value))) {
+      prices[key] = Number(value);
+    }
+  }
+  return prices;
+}
+
+/* Tax shown by the "Incl. TAX" switch. Prices in Supabase are the price
+   the customer pays. 0 = no VAT; use 0.2 if you add 20% VAT. */
+const TAX_RATE = 0;
+
+/* 89 or 89.99 (no £ sign), for the big price tags */
+const amount = (n: number) =>
+  n.toLocaleString('en-GB', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 });
+
+/* £89 or £89.99 */
+const money = (n: number) =>
+  new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'GBP',
+    minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(n);
+
+/* ------------------------------------------------------------------
+   Brand logos (optional). Put files in /public/images/brands/
+   If a file is missing, the brand name shows instead.
+------------------------------------------------------------------- */
+const slug = (t: string) => t.toLowerCase().replace(/[^a-z0-9]/g, '');
+/* ------------------------------------------------------------------
+   MODEL LISTS ARE READ AUTOMATICALLY FROM IMAGE FILES.
+   Put pictures in:  public/images/brands/<device>/<brand>/<Model name>.png
+     <device> = phone, macbook, tablet, laptop or console
+     <brand>  = the brand, e.g. apple, samsung, google, sony
+     file     = the model name exactly as it should appear,
+                e.g. "iPhone 15 Pro.png" or "Galaxy S24 Ultra.jpg"
+   Example:  public/images/brands/phone/apple/iPhone 15 Pro.png
+   Optional: start a file name with a number to set the order,
+             e.g. "01 iPhone 17.png" (the number isn't shown).
+   Then redeploy. New folders and pictures appear on their own.
+------------------------------------------------------------------- */
+type ModelEntry = { name: string; url: string; order: number };
+
+/* The website build lists every picture in the brands folders
+   (brands/<device>/<brand>/picture). Brand logos sitting directly in
+   brands/ are not affected. */
+const MODEL_FILES = import.meta.glob(
+  '/public/images/brands/*/*/*.{png,jpg,jpeg,webp,avif,PNG,JPG,JPEG,WEBP}',
+  { eager: true, query: '?url', import: 'default' },
+) as Record<string, string>;
+
+if (import.meta.env.DEV && Object.keys(MODEL_FILES).length === 0) {
+  console.warn('[Booking] No model pictures found. Put them in public/images/brands/<device>/<brand>/<Model name>.png');
+}
+
+/* Folder names that count as each device type */
+const DEVICE_FOLDERS: Record<string, DeviceKey> = {
+  smartphone: 'phone', smartphones: 'phone', phone: 'phone', phones: 'phone', mobile: 'phone', mobiles: 'phone',
+  macbook: 'macbook', macbooks: 'macbook',
+  tablet: 'tablet', tablets: 'tablet', ipad: 'tablet',
+  laptop: 'laptop', laptops: 'laptop',
+  console: 'console', consoles: 'console',
+};
+
+/* Match a folder name like "apple" or "sony" to a brand already on the page;
+   anything new becomes an extra brand button (e.g. "nothing" -> "Nothing") */
+const brandForFolder = (device: DeviceKey, folder: string) => {
+  const key = slug(folder);
+  const known = BRANDS[device];
   return (
-    <div className="mq-page">
-      <h1 className="mq-sr">Mobile Quick Fix: fast, reliable, professional phone repairs at your door</h1>
+    known.find((b) => slug(b) === key) ??
+    known.find((b) => slug(b).startsWith(key)) ??
+    folder.replace(/[-_]+/g, ' ').trim().replace(/\b\w/g, (c) => c.toUpperCase())
+  );
+};
 
-      {/* Desktop and tablet: the flyer exactly as designed */}
-      <section className="mq-flyer">
-        <img
-          src={`${IMG}mqf-flyer.jpg`}
-          alt="Mobile Quick Fix. Screen repairs, battery replacement, water damage, general repairs, all mobile brands and charging port repair for phones, tablets, laptops and gaming consoles. We come to your door for repair."
-        />
-      </section>
+const MODELS: Record<string, ModelEntry[]> = {};
+const EXTRA_BRANDS: Record<DeviceKey, string[]> = { phone: [], macbook: [], tablet: [], laptop: [], console: [] };
 
-      {/* Phones: the same flyer cut into pieces and stacked */}
-      <section className="mq-stack">
-        <img className="mq-logo" src={`${IMG}mqf-logo.jpg`} alt="Mobile Quick Fix. Fast, reliable, professional." />
-        <img className="mq-script" src={`${IMG}mqf-script.jpg`} alt="Get your device back in no time!" />
+for (const [path, url] of Object.entries(MODEL_FILES)) {
+  const parts = path.split('/');
+  const file = parts[parts.length - 1];
+  const brandFolder = parts[parts.length - 2];
+  const device = DEVICE_FOLDERS[slug(parts[parts.length - 3])];
+  if (!device) continue;
 
-        <ul className="mq-services">
-          {services.map(s => (
-            <li key={s.img}><img src={`${IMG}${s.img}`} alt={s.label} /></li>
+  const brand = brandForFolder(device, brandFolder);
+  if (!BRANDS[device].includes(brand) && !EXTRA_BRANDS[device].includes(brand)) EXTRA_BRANDS[device].push(brand);
+
+  const base = file.replace(/\.[^.]+$/, '');
+  const numbered = base.match(/^(\d{1,3})[\s._-]+(.+)$/);
+  const name = (numbered ? numbered[2] : base).replace(/_/g, ' ').trim();
+  const key = `${device}:${brand}`;
+  if (!MODELS[key]) MODELS[key] = [];
+  MODELS[key].push({ name, url, order: numbered ? Number(numbered[1]) : Number.MAX_SAFE_INTEGER });
+}
+for (const list of Object.values(MODELS)) {
+  list.sort((x, y) => x.order - y.order || x.name.localeCompare(y.name, undefined, { numeric: true }));
+}
+
+/* Search inside the selected brand's models.
+   "iphone17", "17 pro", "Pro 17" and "iPhone 17" all find the iPhone 17 Pro. */
+const squash = (t: string) => t.toLowerCase().replace(/[^a-z0-9]/g, '');
+const modelMatches = (name: string, query: string) => {
+  const n = squash(name);
+  const words = query.toLowerCase().split(/\s+/).map(squash).filter(Boolean);
+  return n.includes(squash(query)) || (words.length > 0 && words.every((w) => n.includes(w)));
+};
+
+/* Brand buttons for a device: the usual list plus any new brand folders */
+const brandsFor = (device: DeviceKey) => [...BRANDS[device], ...EXTRA_BRANDS[device]];
+
+
+/* Use a different logo file for a brand on one device type */
+const LOGO_OVERRIDES: Record<string, string> = { 'laptop:Huawei': 'huawei-laptop' };
+const brandLogo = (name: string, device?: string | null) =>
+  `/images/brands/${LOGO_OVERRIDES[`${device}:${name}`] ?? slug(name)}.png`;
+const helpImg = (tab: string, i: number) => `/images/brands/${tab}-${i + 1}.png`;
+
+const ImgOr: React.FC<{ src: string; alt: string; className?: string; children: React.ReactNode }> = ({ src, alt, className, children }) => {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <>{children}</>;
+  return <img src={src} alt={alt} className={className} onError={() => setFailed(true)} loading="lazy" />;
+};
+
+/* Clickable tile. Uses a div so your site-wide <button> styles
+   (fixed height, pill corners) can't squash it. */
+const Tile: React.FC<{
+  className: string;
+  onClick: () => void;
+  label?: string;
+  busy?: boolean;
+  pressed?: boolean;
+  expanded?: boolean;
+  children: React.ReactNode;
+}> = ({ className, onClick, label, busy, pressed, expanded, children }) => (
+  <div
+    role="button"
+    tabIndex={0}
+    className={className}
+    onClick={onClick}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onClick();
+      }
+    }}
+    aria-label={label}
+    aria-busy={busy || undefined}
+    aria-pressed={pressed}
+    aria-expanded={expanded}
+  >
+    {children}
+  </div>
+);
+
+/* Outline device icons */
+const DeviceIcon: React.FC<{ k: DeviceKey }> = ({ k }) => {
+  const common = { viewBox: '0 0 64 64', fill: 'none', stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, className: 'bk-line-icon' };
+  if (k === 'phone') return (
+    <svg {...common}><rect x="21" y="6" width="22" height="50" rx="4" /><path d="M28 7.5h8v2a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1z" /><path d="M26 51h4M32 51h2" /></svg>
+  );
+  if (k === 'tablet') return (
+    <svg {...common}><rect x="13" y="6" width="38" height="52" rx="4" /><rect x="17" y="12" width="30" height="41" rx="1" /><path d="M28 9h1M31 9h5" /><path d="M47 30v6" /></svg>
+  );
+  if (k === 'console') return (
+    <svg {...common}>
+      <rect x="40" y="6" width="15" height="50" /><circle cx="47.5" cy="13" r="2.5" /><path d="M47.5 21v3M47.5 27v8" />
+      <path d="M15 34h18c6 0 9 4 9 10 0 5-1 10-4 11-3 1-5-1-7-4l-2-3h-10l-2 3c-2 3-4 5-7 4-3-1-4-6-4-11 0-6 3-10 9-10z" />
+      <path d="M24 34v-6M12 44h6M15 41v6" /><circle cx="31" cy="42" r="1.4" /><circle cx="34" cy="45" r="1.4" /><circle cx="28" cy="45" r="1.4" /><circle cx="31" cy="48" r="1.4" />
+    </svg>
+  );
+  return (
+    <svg {...common}>
+      <rect x="11" y="14" width="42" height="29" rx="2" /><rect x="15" y="18" width="34" height="21" />
+      <path d="M5 46h54v2a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z" /><path d="M28 46v1.5h8V46" />
+      <path d="M19 26l5-5M19 31l3-3M24 26l3-3" />
+    </svg>
+  );
+};
+
+/* Phone with a blue question mark (used for "What model do I have?") */
+const HelpPhoneIcon: React.FC<{ className?: string }> = ({ className = 'bk-help-svg' }) => (
+  <svg className={className} viewBox="0 0 64 72" aria-hidden="true">
+    <rect x="12" y="4" width="34" height="62" rx="4" fill="none" stroke="currentColor" strokeWidth="2.4" />
+    <path d="M24 5.5h10v2.5H24z" fill="none" stroke="currentColor" strokeWidth="2" />
+    <path d="M25 60h8" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+    <circle cx="46" cy="30" r="10" className="bk-help-q-bg" />
+    <text x="46" y="35" textAnchor="middle" className="bk-help-q-text">?</text>
+  </svg>
+);
+
+/* Phone with a big question mark on the screen (used for "Other Model") */
+const OtherPhoneIcon: React.FC = () => (
+  <svg className="bk-model-icon bk-model-icon-other" viewBox="0 0 64 72" aria-hidden="true">
+    <rect x="15" y="4" width="34" height="62" rx="4" fill="none" stroke="currentColor" strokeWidth="2.4" />
+    <path d="M27 5.5h10v2.5H27z" fill="none" stroke="currentColor" strokeWidth="2" />
+    <path d="M28 60h8" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+    <text x="32" y="44" textAnchor="middle" className="bk-other-q">?</text>
+  </svg>
+);
+
+/* Guess the device from a typed model name */
+function guessDevice(text: string): DeviceKey {
+  const t = text.toLowerCase();
+  if (/macbook/.test(t)) return 'macbook';
+  if (/ipad|tab\b|tab |galaxy tab|fire hd|kindle|matepad/.test(t)) return 'tablet';
+  if (/ps[345]|playstation|xbox|switch|nintendo|steam deck/.test(t)) return 'console';
+  if (/laptop|thinkpad|pavilion|xps|inspiron|latitude|ideapad|surface laptop|zenbook|vivobook|aspire|chromebook|omen|legion|rog|alienware|razer blade/.test(t)) return 'laptop';
+  return 'phone';
+}
+
+/* ------------------------------------------------------------------
+   "What model do I have?" modal with drawn phone screens
+------------------------------------------------------------------- */
+type App = { name: string; color: string; icon: IconDefinition };
+type Row = { label: string; value?: string; badge?: string };
+type Screen =
+  | { kind: 'home'; dark?: boolean; apps: App[]; hi: string }
+  | { kind: 'list'; dark?: boolean; title: string; back?: string; header?: string; rows: Row[]; hi: number[] }
+  | { kind: 'window'; title: string; rows: Row[]; hi: number[] }
+  | { kind: 'label'; rows: Row[]; hi: number[] };
+
+const IOS_APPS: App[] = [
+  { name: 'Files', color: '#1C7CF4', icon: faFolder },
+  { name: 'Maps', color: '#34A853', icon: faMapLocationDot },
+  { name: 'Settings', color: '#8E8E93', icon: faGear },
+  { name: 'Calendar', color: '#FF3B30', icon: faCalendarDays },
+  { name: 'Camera', color: '#3A3A3C', icon: faCamera },
+  { name: 'Photos', color: '#FF9F0A', icon: faImage },
+  { name: 'Clock', color: '#1C1C1E', icon: faClock },
+  { name: 'Safari', color: '#0A84FF', icon: faCompass },
+  { name: 'Books', color: '#FF9500', icon: faBook },
+  { name: 'Translate', color: '#5E5CE6', icon: faLanguage },
+  { name: 'Phone', color: '#30D158', icon: faPhone },
+  { name: 'Messages', color: '#30D158', icon: faCommentDots },
+];
+
+const ANDROID_APPS: App[] = [
+  { name: 'Health', color: '#19A974', icon: faHeartPulse },
+  { name: 'Notes', color: '#E8453C', icon: faNoteSticky },
+  { name: 'Music', color: '#5A6CF2', icon: faMusic },
+  { name: 'Gallery', color: '#D6336C', icon: faImage },
+  { name: 'Pass', color: '#2B59C3', icon: faKey },
+  { name: 'Email', color: '#E8453C', icon: faEnvelope },
+  { name: 'Camera', color: '#3A3A3C', icon: faCamera },
+  { name: 'Settings', color: '#4C6EF5', icon: faGear },
+];
+
+type HelpTab = 'ios' | 'android';
+
+const HELP: Record<HelpTab, { title: string; steps: { text: React.ReactNode; screen: Screen }[] }> = {
+  ios: {
+    title: 'iPhone or iPad',
+    steps: [
+      { text: <>Go to the <b>Settings</b> app on your iPhone or iPad.</>,
+        screen: { kind: 'home', apps: IOS_APPS, hi: 'Settings' } },
+      { text: <>Tap <b>General</b> in Settings, then tap <b>About</b>.</>,
+        screen: { kind: 'list', title: 'General', back: 'Settings', hi: [0], rows: [
+          { label: 'About' }, { label: 'Software Update', badge: '1' }, { label: 'AirDrop' },
+          { label: 'AirPlay & Handoff' }, { label: 'Picture in Picture' } ] } },
+      { text: <>At <b>Model Name</b> you’ll see the model. To search by model code, tap <b>Model Number</b> to see the code starting with A.</>,
+        screen: { kind: 'list', title: 'About', back: 'General', hi: [2, 3], rows: [
+          { label: 'Name', value: 'My iPhone 13' }, { label: 'iOS Version', value: '17.6' },
+          { label: 'Model Name', value: 'iPhone 13' }, { label: 'Model Number', value: 'MLPF3B/A' },
+          { label: 'Serial Number', value: 'F2LXQ7K9N1' } ] } },
+    ],
+  },
+  android: {
+    title: 'Android phone or tablet',
+    steps: [
+      { text: <>Go to your home screen and tap the <b>Settings</b> icon.</>,
+        screen: { kind: 'home', dark: true, apps: ANDROID_APPS, hi: 'Settings' } },
+      { text: <>Look for <b>About phone</b>, <b>About tablet</b>, <b>Device information</b> or something similar.</>,
+        screen: { kind: 'list', dark: true, title: 'Settings', hi: [3], rows: [
+          { label: 'Accessibility', value: 'TalkBack, Mono audio' }, { label: 'Software update', value: 'Download and install' },
+          { label: 'Tips and user manual', value: 'Useful tips' }, { label: 'About phone', value: 'Status, Phone name' } ] } },
+      { text: <>In <b>About phone</b> you’ll find the <b>model name</b> and <b>model code</b>.</>,
+        screen: { kind: 'list', dark: true, title: 'About phone', header: 'Galaxy S22 Ultra', hi: [1, 2], rows: [
+          { label: 'Phone number', value: '+44 7700 900123' }, { label: 'Product name', value: 'Galaxy S22 Ultra' },
+          { label: 'Model name', value: 'SM-S908B/DS' }, { label: 'Serial number', value: 'R5CT21ABCDE' } ] } },
+    ],
+  },
+};
+
+const StatusBar: React.FC = () => (
+  <div className="ph-status">
+    <span>14:24</span>
+    <span className="ph-status-icons"><FontAwesomeIcon icon={faSignal} /><FontAwesomeIcon icon={faWifi} /><span className="ph-batt">100</span></span>
+  </div>
+);
+
+const DrawnScreen: React.FC<{ screen: Screen }> = ({ screen }) => {
+  if (screen.kind === 'home') {
+    return (
+      <div className={`ph ph-home ${screen.dark ? 'is-dark' : 'is-ios'}`}>
+        <StatusBar />
+        <div className="ph-apps">
+          {screen.apps.map((a) => (
+            <div key={a.name} className={`ph-app ${a.name === screen.hi ? 'is-hi' : ''}`}>
+              <span className="ph-app-icon" style={{ background: a.color }}><FontAwesomeIcon icon={a.icon} /></span>
+              <span className="ph-app-name">{a.name}</span>
+            </div>
           ))}
-        </ul>
-
-        <img className="mq-strip" src={`${IMG}mqf-brands.jpg`} alt="We repair Apple, Samsung, Xiaomi, Huawei, Oppo, OnePlus and Motorola" />
-        <img className="mq-strip" src={`${IMG}mqf-categories.jpg`} alt="Phones, tablets, laptops, gaming consoles" />
-
-        <div className="mq-green">
-          <img className="mq-house" src={`${IMG}mqf-house.jpg`} alt="" />
-          <img className="mq-devices" src={`${IMG}mqf-devices.jpg`} alt="We come to your door for repair!" />
         </div>
-      </section>
-
-      <div className="mq-contactbar">
-        <a href={PHONE_TEL} className="mq-cta"><FontAwesomeIcon icon={faPhone} /> Call {PHONE_DISPLAY}</a>
-        <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" className="mq-cta mq-cta-ghost">
-          <FontAwesomeIcon icon={faCommentDots} /> WhatsApp for a quote
-        </a>
+        {screen.dark && <div className="ph-nav"><span>‹</span><span>○</span><span>|||</span></div>}
+      </div>
+    );
+  }
+  if (screen.kind === 'list') {
+    return (
+      <div className={`ph ph-list ${screen.dark ? 'is-dark' : 'is-light'}`}>
+        <StatusBar />
+        <div className="ph-bar">
+          {screen.back && <span className="ph-back">‹ {screen.back}</span>}
+          <span className="ph-title">{screen.title}</span>
+        </div>
+        {screen.header && <div className="ph-header">{screen.header}</div>}
+        <div className="ph-rows">
+          {screen.rows.map((r, i) => (
+            <div key={i} className={`ph-row ${screen.hi.includes(i) ? 'is-hi' : ''}`}>
+              <span className="ph-row-label">{r.label}</span>
+              {r.value && <span className="ph-row-value">{r.value}</span>}
+              {r.badge && <span className="ph-badge">{r.badge}</span>}
+              {!r.value && !r.badge && <span className="ph-chev">›</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (screen.kind === 'window') {
+    return (
+      <div className="ph-window">
+        <div className="ph-window-bar"><i /><i /><i /><span>{screen.title}</span></div>
+        <div className="ph-rows">
+          {screen.rows.map((r, i) => (
+            <div key={i} className={`ph-row ${screen.hi.includes(i) ? 'is-hi' : ''}`}>
+              <span className="ph-row-label">{r.label}</span>
+              {r.value && <span className="ph-row-value">{r.value}</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="ph-label">
+      <div className="ph-label-sticker">
+        <div className="ph-barcode" />
+        {screen.rows.map((r, i) => (
+          <div key={i} className={`ph-label-row ${screen.hi.includes(i) ? 'is-hi' : ''}`}>
+            <b>{r.label}:</b> {r.value}
+          </div>
+        ))}
       </div>
     </div>
   );
-}
+};
+
+const CLOSE_MS = 350; /* keep in step with the bk-lift animation in the CSS */
+
+const ModelHelp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const [tab, setTab] = useState<HelpTab>('ios');
+  const [closing, setClosing] = useState(false);
+
+  /* Play the slide-up animation, then remove the popup */
+  const close = () => {
+    if (closing) return;
+    setClosing(true);
+    window.setTimeout(onClose, CLOSE_MS);
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
+  return (
+    <div className={`bk-modal-backdrop ${closing ? 'is-closing' : ''}`} onClick={close}>
+      <div className="bk-modal" role="dialog" aria-modal="true" aria-labelledby="bk-help-title" onClick={(e) => e.stopPropagation()}>
+        <button className="bk-modal-close" onClick={close} aria-label="Close">
+          <FontAwesomeIcon icon={faXmark} />
+        </button>
+
+        <div className="bk-tabs" role="tablist">
+          {(Object.keys(HELP) as HelpTab[]).map((k) => (
+            <button key={k} role="tab" aria-selected={tab === k} className={`bk-tab ${tab === k ? 'is-active' : ''}`} onClick={() => setTab(k)}>
+              {k === 'ios' ? 'Apple iOS' : 'Android'}
+            </button>
+          ))}
+        </div>
+
+        <h2 id="bk-help-title" className="bk-modal-title">
+          Find <b>Model</b> or <b>Model number</b>
+        </h2>
+
+        <ol className="bk-help-steps">
+          {HELP[tab].steps.map((s, i) => (
+            <li key={`${tab}-${i}`} className="bk-help-step">
+              <div className="bk-help-text">
+                <span className="bk-help-num">Step {i + 1}</span>
+                <p>{s.text}</p>
+              </div>
+              <div className="bk-help-screen" aria-hidden="true">
+                <ImgOr src={helpImg(tab, i)} alt={`Step ${i + 1}`} className="bk-help-img">
+                  <DrawnScreen screen={s.screen} />
+                </ImgOr>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------
+   Booking page
+------------------------------------------------------------------- */
+const STEPS: [string, string][] = [['Select', 'device'], ['Select', 'repair'], ['Finalize', 'order']];
+
+const BookingPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [device, setDevice] = useState<DeviceKey | null>(null);
+  const [brand, setBrand] = useState<string | null>(null);
+  const [model, setModel] = useState('');
+  const [modelImg, setModelImg] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [repairs, setRepairs] = useState<string[]>([]);
+  const [showHelp, setShowHelp] = useState(false);
+  const [loadingKey, setLoadingKey] = useState<string | null>(null);
+  const [modelSearch, setModelSearch] = useState('');
+  const [otherModel, setOtherModel] = useState(false);
+  const [repairsOpen, setRepairsOpen] = useState(true);
+  const [repairHint, setRepairHint] = useState('');
+  const [prices, setPrices] = useState<Prices>({});
+  const [pricesLoading, setPricesLoading] = useState(false);
+  const [inclTax, setInclTax] = useState(true);
+  const modelSearchRef = useRef<HTMLInputElement>(null);
+
+  /* Short loading spinner inside the tapped button, then show the next options */
+  const withSpinner = (key: string, action: () => void) => {
+    if (loadingKey) return;
+    setLoadingKey(key);
+    window.setTimeout(() => {
+      action();
+      setLoadingKey(null);
+    }, 700);
+  };
+  const [form, setForm] = useState({ name: '', phone: '', postcode: '', when: 'As soon as possible', notes: '' });
+  const [error, setError] = useState('');
+
+  /* Put the cursor in the model search box when a model list opens (not on phones,
+     where it would pop the keyboard up) */
+  useEffect(() => {
+    if (brand && !otherModel && modelSearchRef.current && window.matchMedia('(pointer: fine)').matches) {
+      modelSearchRef.current.focus({ preventScroll: true });
+    }
+  }, [brand, otherModel]);
+
+  /* Load the Montserrat font once */
+  useEffect(() => {
+    if (document.getElementById('bk-font')) return;
+    const link = document.createElement('link');
+    link.id = 'bk-font';
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@800&display=swap';
+    document.head.appendChild(link);
+  }, []);
+
+  /* Pre-select from links like /book?device=phone&service=screen */
+  useEffect(() => {
+    const d = params.get('device') as DeviceKey | null;
+    const s = params.get('service');
+    if (d && DEVICES.some((x) => x.key === d)) setDevice(d);
+    if (s && s !== 'callout') setRepairs([s]);
+  }, [params]);
+
+  /* Look up this model's prices once we reach the repair step */
+  const onRepairStep = step >= 2;
+  useEffect(() => {
+    const m = model.trim();
+    if (!onRepairStep || !device || !brand || !m) {
+      setPrices({});
+      setPricesLoading(false);
+      return;
+    }
+    let live = true;
+    setPricesLoading(true);
+    fetchPrices(device, brand, m)
+      .then((p) => live && setPrices(p))
+      .catch(() => live && setPrices({}))
+      .finally(() => live && setPricesLoading(false));
+    return () => {
+      live = false;
+    };
+  }, [onRepairStep, device, brand, model]);
+
+  const deviceInfo = useMemo(() => DEVICES.find((d) => d.key === device) || null, [device]);
+
+  const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const goBack = () => {
+    setError('');
+    setRepairHint('');
+    if (step === 3) return setStep(2);
+    if (step === 2) return setStep(1);
+    if (brand && otherModel) return setOtherModel(false);
+    if (brand) {
+      setModelSearch('');
+      setModel('');
+      setModelImg(null);
+      return setBrand(null);
+    }
+    if (device) return setDevice(null);
+    navigate('/');
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = search.trim();
+    if (!text) return;
+    const d = guessDevice(text);
+    setDevice(d);
+    setBrand(null);
+    setModel(text);
+    setModelImg(null);
+    setRepairs((r) => r.filter((k) => REPAIRS[d].some((x) => x.key === k)));
+    setStep(2);
+    scrollTop();
+  };
+
+  const toggleRepair = (key: string) => {
+    setRepairHint('');
+    setRepairs((r) => (r.includes(key) ? r.filter((k) => k !== key) : [...r, key]));
+  };
+
+  /* "Honor" + "X70" -> "Honor X70", but "Honor" + "Honor X5c Plus" stays "Honor X5c Plus" */
+  const deviceName = (() => {
+    const m = model.trim();
+    if (brand && m.toLowerCase().startsWith(brand.toLowerCase())) return m;
+    return [brand, m].filter(Boolean).join(' ') || deviceInfo?.label || 'Device';
+  })();
+
+  /* Selected repairs and their prices (after the Incl. TAX switch) */
+  const selected = device ? REPAIRS[device].filter((r) => repairs.includes(r.key)) : [];
+  const priceOf = (key: string) => {
+    const p = prices[key];
+    if (p == null) return undefined;
+    return inclTax ? p : Math.round((p / (1 + TAX_RATE)) * 100) / 100;
+  };
+  const priceText = (key: string) => {
+    const p = priceOf(key);
+    return p != null ? money(p) : 'Price on request';
+  };
+  const pricedTotal = selected.reduce((sum, r) => sum + (priceOf(r.key) ?? 0), 0);
+  const anyPriced = selected.some((r) => priceOf(r.key) != null);
+  const onRequestCount = selected.filter((r) => priceOf(r.key) == null).length;
+  const totalText = !selected.length ? '-' : anyPriced ? money(pricedTotal) : 'On request';
+  const totalNote =
+    anyPriced && onRequestCount
+      ? `Plus ${onRequestCount} repair${onRequestCount > 1 ? 's' : ''} priced on request`
+      : '';
+  const taxLabel = inclTax ? `incl. tax (${Math.round(TAX_RATE * 100)}%)` : 'excl. tax';
+
+  /* "Get A Quote": send the chosen repairs and prices on WhatsApp */
+  const getQuote = () => {
+    const lines = [
+      'Hi Mobile Quick Fix, could I get a quote please?',
+      '',
+      `Device: ${deviceName}`,
+      `Repair: ${selected.map((r) => `${r.label} (${pricesLoading ? 'price on request' : priceText(r.key).toLowerCase()})`).join(', ') || 'Not sure'}`,
+      anyPriced && !pricesLoading ? `Total: ${money(pricedTotal)}${onRequestCount ? ' + price on request' : ''} ${taxLabel}` : '',
+    ].filter(Boolean);
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank', 'noopener');
+  };
+
+  const bookNow = () => {
+    if (!selected.length) {
+      setRepairsOpen(true);
+      setRepairHint('Pick at least one repair above to continue.');
+      return;
+    }
+    setStep(3);
+    scrollTop();
+  };
+
+  const repairLabels = device
+    ? REPAIRS[device].filter((r) => repairs.includes(r.key)).map((r) => r.label)
+    : [];
+
+  const sendBooking = () => {
+    if (!form.name.trim() || !form.phone.trim() || !form.postcode.trim()) {
+      setError('Add your name, phone number and postcode so we can confirm your booking.');
+      return;
+    }
+    const msg = [
+      'Hi Mobile Quick Fix, I’d like to book a repair.',
+      '',
+      `Device: ${deviceName}`,
+      `Repair: ${repairLabels.join(', ') || 'Not sure'}`,
+      `When: ${form.when}`,
+      '',
+      `Name: ${form.name}`,
+      `Phone: ${form.phone}`,
+      `Postcode: ${form.postcode}`,
+      form.notes ? `Notes: ${form.notes}` : '',
+    ].filter((l, i, a) => l !== '' || a[i - 1] !== '').join('\n');
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+  };
+
+  const heading =
+    step === 1 ? <>Which <b>Gadget</b> do you have?</>
+    : step === 2 ? <>Select your <b>repair</b></>
+    : <>Finalize your <b>order</b></>;
+
+  return (
+    <div className="bk-page">
+      <div className="bk-wrap">
+        <h2 className="bk-page-title">Use the system below to get a price or book your repair!</h2>
+
+        {/* Stepper */}
+        <ol className="bk-stepper" aria-label="Booking progress">
+          {STEPS.map(([a, b], i) => {
+            const label = `${a} ${b}`;
+            const n = i + 1;
+            const state = n < step ? 'is-done' : n === step ? 'is-current' : '';
+            return (
+              <li key={label} className={`bk-stepper-item ${state}`} aria-current={n === step ? 'step' : undefined}>
+                <span className="bk-stepper-dot">{n}</span>
+                <span className="bk-stepper-label">{a} <b>{b}</b></span>
+              </li>
+            );
+          })}
+        </ol>
+
+        {/* Heading with back button. On the repair step it shows the chosen device. */}
+        {step === 2 && device ? (
+          <div className="bk-device-head">
+            <button className="bk-back" onClick={goBack} aria-label="Go back">
+              <FontAwesomeIcon icon={faArrowLeft} />
+            </button>
+            <span className="bk-device-pic">
+              {modelImg ? (
+                <ImgOr src={modelImg} alt="" className="bk-device-img">
+                  <DeviceIcon k={device} />
+                </ImgOr>
+              ) : (
+                <DeviceIcon k={device} />
+              )}
+            </span>
+            <div className="bk-device-info">
+              <h1 className="bk-device-title">{deviceName}</h1>
+              <span className="bk-device-type">{deviceInfo?.label}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="bk-heading">
+            <button className="bk-back" onClick={goBack} aria-label="Go back">
+              <FontAwesomeIcon icon={faArrowLeft} />
+            </button>
+            <h1>{heading}</h1>
+          </div>
+        )}
+
+        {/* ---------------- Step 1 ---------------- */}
+        {step === 1 && (
+          <>
+            {!brand && (
+              <div className="bk-search-panel">
+                <form className="bk-search-main" onSubmit={handleSearch}>
+                  <label htmlFor="bk-search" className="bk-lead">
+                    <span className="bk-dot" />Start typing <b>Model name</b>, or <b>Model number</b> directly
+                  </label>
+                  <div className="bk-search">
+                    <input
+                      id="bk-search"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="11 Pro, or iPhone 11"
+                      autoComplete="off"
+                    />
+                    <button type="submit" aria-label="Search">
+                      <FontAwesomeIcon icon={faMagnifyingGlass} />
+                    </button>
+                  </div>
+                </form>
+                <Tile className="bk-help-btn" onClick={() => setShowHelp(true)}>
+                  <HelpPhoneIcon />
+                  What model do I have?
+                </Tile>
+              </div>
+            )}
+
+            {!device && (
+              <>
+                <p className="bk-lead"><span className="bk-dot" />Or select your <b>Gadget type</b></p>
+                <div className="bk-grid bk-grid-devices">
+                  {DEVICES.map((d) => (
+                    <Tile key={d.key} className={`bk-tile bk-tile-device ${loadingKey === d.key ? 'is-selected' : ''}`} onClick={() => withSpinner(d.key, () => setDevice(d.key))} label={d.label} busy={loadingKey === d.key}>
+                      {loadingKey === d.key ? <span className="bk-spinner" aria-label="Loading" /> : (
+                        <>
+                          <DeviceIcon k={d.key} />
+                          <span className="bk-device-label">{d.label}</span>
+                        </>
+                      )}
+                    </Tile>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {device && !brand && (
+              <>
+                <p className="bk-lead"><span className="bk-dot" />Select a <b>Brand</b></p>
+                <div className="bk-grid bk-grid-brands">
+                  {brandsFor(device).map((b) => (
+                    <Tile key={b} className={`bk-tile bk-tile-brand ${loadingKey === b ? 'is-selected' : ''}`} onClick={() => withSpinner(b, () => { setBrand(b); setOtherModel(false); setModelSearch(''); scrollTop(); })} label={b} busy={loadingKey === b}>
+                      {loadingKey === b ? <span className="bk-spinner" aria-label="Loading" /> : (
+                        <ImgOr src={brandLogo(b, device)} alt={b} className="bk-brand-logo">
+                          {b}
+                        </ImgOr>
+                      )}
+                    </Tile>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {device && brand && MODELS[`${device}:${brand}`] && !otherModel && (() => {
+              const list = MODELS[`${device}:${brand}`];
+              const q = modelSearch.trim();
+              const shown = q ? list.filter((m) => modelMatches(m.name, q)) : list;
+              /* Same order as the reference: help tile first, "Other Model" starts row two.
+                 While searching, only the help tile and the matches are shown. */
+              const items: ('__help' | '__other' | ModelEntry)[] = q
+                ? ['__help', ...shown]
+                : ['__help', ...shown.slice(0, 4), '__other', ...shown.slice(4)];
+              return (
+                <>
+                  <div className="bk-models-head">
+                    <h2 className="bk-models-title">
+                      Supported Models
+                      <span className="bk-count">{shown.length}</span>
+                      {q && <span className="bk-total">{list.length} Total</span>}
+                    </h2>
+                    <label className="bk-model-search">
+                      <FontAwesomeIcon icon={faMagnifyingGlass} />
+                      <input
+                        ref={modelSearchRef}
+                        value={modelSearch}
+                        onChange={(e) => setModelSearch(e.target.value)}
+                        placeholder="Start typing or Select one"
+                        aria-label={`Search ${brand} models`}
+                        autoComplete="off"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="bk-grid bk-grid-models">
+                    {items.map((m) => {
+                      if (m === '__help') return (
+                        <Tile key="__help" className="bk-tile bk-tile-model bk-tile-model-help" onClick={() => setShowHelp(true)} label="What model do I have?">
+                          <HelpPhoneIcon className="bk-model-help-icon" />
+                          <span className="bk-model-help-text">What model do I have?</span>
+                        </Tile>
+                      );
+                      if (m === '__other') return (
+                        <Tile
+                          key="__other"
+                          className={`bk-tile bk-tile-model ${loadingKey === '__other' ? 'is-selected' : ''}`}
+                          onClick={() => withSpinner('__other', () => { setModel(''); setModelImg(null); setOtherModel(true); })}
+                          label="Other model"
+                          busy={loadingKey === '__other'}
+                        >
+                          {loadingKey === '__other' ? <span className="bk-spinner" aria-label="Loading" /> : (
+                            <>
+                              <span className="bk-model-pic"><OtherPhoneIcon /></span>
+                              <span className="bk-model-name">Other Model</span>
+                              <span className="bk-model-sub">Can’t Find My Model!</span>
+                            </>
+                          )}
+                        </Tile>
+                      );
+                      return (
+                        <Tile
+                          key={m.name}
+                          className={`bk-tile bk-tile-model ${loadingKey === m.name ? 'is-selected' : ''}`}
+                          onClick={() => withSpinner(m.name, () => { setModel(m.name); setModelImg(m.url); setStep(2); scrollTop(); })}
+                          label={m.name}
+                          busy={loadingKey === m.name}
+                        >
+                          {loadingKey === m.name ? <span className="bk-spinner" aria-label="Loading" /> : (
+                            <>
+                              <span className="bk-model-pic">
+                                <ImgOr src={m.url} alt="" className="bk-model-img">
+                                  <DeviceIcon k={device} />
+                                </ImgOr>
+                              </span>
+                              <span className="bk-model-name">{m.name}</span>
+                            </>
+                          )}
+                        </Tile>
+                      );
+                    })}
+                  </div>
+
+                  {q && shown.length === 0 && (
+                    <p className="bk-no-match">
+                      No {brand} model matches “{modelSearch}”.{' '}
+                      <button className="bk-link" onClick={() => { setModel(modelSearch); setModelImg(null); setOtherModel(true); }}>
+                        Book it as “{modelSearch}”
+                      </button>
+                    </p>
+                  )}
+                </>
+              );
+            })()}
+
+            {device && brand && (!MODELS[`${device}:${brand}`] || otherModel) && (
+              <div className="bk-card">
+                <label htmlFor="bk-model" className="bk-lead">
+                  <span className="bk-dot" />{otherModel ? 'Type your model' : 'Model (optional, helps us bring the right part)'}
+                </label>
+                <input
+                  id="bk-model"
+                  className="bk-input"
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  placeholder={deviceInfo?.modelHint}
+                />
+                <div className="bk-row">
+                  <button className="bk-link" onClick={() => setShowHelp(true)}>How do I find my model?</button>
+                  <button className="bk-primary" onClick={() => { setStep(2); scrollTop(); }}>Continue</button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ---------------- Step 2 ---------------- */}
+        {step === 2 && device && (
+          <div className="bk-repair-layout">
+            <div className="bk-repair-main">
+              <div className="bk-repair-top">
+                <p className="bk-lead bk-repair-lead"><span className="bk-dot" />Select <b>repair</b></p>
+                <label className="bk-tax">
+                  {/* <span>Incl. TAX</span> */}
+                  {/* <input type="checkbox" role="switch" checked={inclTax} onChange={(e) => setInclTax(e.target.checked)} /> */}
+                  {/* <span className="bk-switch" aria-hidden="true" /> */}
+                </label>
+              </div>
+
+              <Tile
+                className="bk-repair-group"
+                onClick={() => setRepairsOpen((o) => !o)}
+                expanded={repairsOpen}
+                label={`${REPAIR_GROUP_TITLE[device]}, ${REPAIRS[device].length} repairs`}
+              >
+                <span className="bk-repair-group-icon"><DeviceIcon k={device} /></span>
+                <span className="bk-repair-group-title">{REPAIR_GROUP_TITLE[device]}</span>
+                <span className="bk-repair-group-count">{REPAIRS[device].length} repairs</span>
+                <FontAwesomeIcon icon={faChevronRight} className="bk-repair-group-chev" />
+              </Tile>
+
+              {repairsOpen && (
+                <div className="bk-repair-list">
+                  {REPAIRS[device].map((r) => {
+                    const on = repairs.includes(r.key);
+                    const p = priceOf(r.key);
+                    return (
+                      <Tile key={r.key} className={`bk-repair-card ${on ? 'is-selected' : ''}`} pressed={on} onClick={() => toggleRepair(r.key)}>
+                        <span className="bk-repair-text">
+                          <strong>{r.label}</strong>
+                          {r.sub && <small>{r.sub}</small>}
+                        </span>
+                        {pricesLoading ? (
+                          <span className="bk-price is-loading" aria-label="Loading price">…</span>
+                        ) : p != null ? (
+                          <span className="bk-price has-price" aria-label={money(p)}><sup>£</sup>{amount(p)}</span>
+                        ) : (
+                          <span className="bk-price">price on<br />request</span>
+                        )}
+                      </Tile>
+                    );
+                  })}
+                </div>
+              )}
+
+              {repairHint && <p className="bk-error bk-repair-hint" role="alert">{repairHint}</p>}
+            </div>
+
+            <aside className="bk-quote" aria-live="polite">
+              <h2 className="bk-quote-title">Service(s) Selected</h2>
+              <p className="bk-quote-device">{deviceName}</p>
+
+              {selected.length > 0 && (
+                <ul className="bk-quote-list">
+                  {selected.map((r) => (
+                    <li key={r.key}>
+                      <span>{r.label}</span>
+                      <span className="bk-quote-price">{pricesLoading ? '…' : priceText(r.key)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <div className="bk-quote-row">
+                <span>sub-total</span>
+                <span>{selected.length && anyPriced ? money(pricedTotal) : '-'}</span>
+              </div>
+
+              <div className="bk-quote-total">
+                <span>
+                  Total
+                  <small>{taxLabel}</small>
+                </span>
+                <span>{pricesLoading && selected.length ? '…' : totalText}</span>
+              </div>
+              {totalNote && !pricesLoading && <p className="bk-quote-note">{totalNote}</p>}
+
+              <button type="button" className="bk-quote-btn" onClick={getQuote}>
+                <b>Get A Quote</b>
+                <small>Send your repairs to us on WhatsApp</small>
+              </button>
+              <button type="button" className="bk-book-btn" onClick={bookNow}>
+                <b>Book Repair Now</b>
+                <small>{selected.length ? 'Next: your details' : 'Select which service?'}</small>
+              </button>
+            </aside>
+          </div>
+        )}
+
+        {/* ---------------- Step 3 ---------------- */}
+        {step === 3 && device && (
+          <div className="bk-final">
+            <aside className="bk-summary">
+              <h2>Your repair</h2>
+              <dl>
+                <dt>Device</dt><dd>{deviceName}</dd>
+                <dt>Repair</dt><dd>{repairLabels.join(', ')}</dd>
+              </dl>
+              <p className="bk-summary-note">We’ll reply with a price and a time before anything is booked.</p>
+            </aside>
+
+            <div className="bk-card bk-form">
+              <div className="bk-field">
+                <label htmlFor="f-name">Your name</label>
+                <input id="f-name" className="bk-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoComplete="name" />
+              </div>
+              <div className="bk-field-row">
+                <div className="bk-field">
+                  <label htmlFor="f-phone">Phone number</label>
+                  <input id="f-phone" className="bk-input" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} autoComplete="tel" />
+                </div>
+                <div className="bk-field">
+                  <label htmlFor="f-post">Postcode</label>
+                  <input id="f-post" className="bk-input" value={form.postcode} onChange={(e) => setForm({ ...form, postcode: e.target.value.toUpperCase() })} autoComplete="postal-code" />
+                </div>
+              </div>
+              <div className="bk-field">
+                <label htmlFor="f-when">When suits you?</label>
+                <select id="f-when" className="bk-input" value={form.when} onChange={(e) => setForm({ ...form, when: e.target.value })}>
+                  <option>As soon as possible</option>
+                  <option>Today</option>
+                  <option>Tomorrow morning</option>
+                  <option>Tomorrow afternoon</option>
+                  <option>Tomorrow evening</option>
+                  <option>This weekend</option>
+                </select>
+              </div>
+              <div className="bk-field">
+                <label htmlFor="f-notes">Anything else? (optional)</label>
+                <textarea id="f-notes" className="bk-input" rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="e.g. parking info, or what happened to the device" />
+              </div>
+
+              {error && <p className="bk-error" role="alert">{error}</p>}
+
+              <button className="bk-primary bk-wide" onClick={sendBooking}>
+                <FontAwesomeIcon icon={faCommentDots} /> Send booking on WhatsApp
+              </button>
+              <a className="bk-secondary bk-wide" href={PHONE_TEL}>
+                <FontAwesomeIcon icon={faPhone} /> Or call {PHONE_DISPLAY}
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {showHelp && <ModelHelp onClose={() => setShowHelp(false)} />}
+    </div>
+  );
+};
+
+export default BookingPage;
+
+
+// import React from 'react';
+// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+// import { faPhone, faCommentDots } from '@fortawesome/free-solid-svg-icons';
+// import './HomePageDesktop.css';
+
+// /* ------------------------------------------------------------------
+//    Business details — replace the TODO placeholders before going live
+// ------------------------------------------------------------------- */
+// const PHONE_DISPLAY = '07572 424207';
+// const PHONE_TEL = 'tel:+447572424207';
+// const WHATSAPP_URL = 'https://wa.me/447572424207';
+
+// /* Images live in /public/images (cut from the flyer) */
+// const IMG = '/images/';
+
+// const services = [
+//   { img: 'mqf-service-1.jpg', label: 'Screen repairs' },
+//   { img: 'mqf-service-2.jpg', label: 'Battery replacement' },
+//   { img: 'mqf-service-3.jpg', label: 'Water damage' },
+//   { img: 'mqf-service-4.jpg', label: 'General repairs' },
+//   { img: 'mqf-service-5.jpg', label: 'All mobile brands' },
+//   { img: 'mqf-service-6.jpg', label: 'Charging port repair' },
+// ];
+
+// export default function MobileQuickFix() {
+//   return (
+//     <div className="mq-page">
+//       <h1 className="mq-sr">Mobile Quick Fix: fast, reliable, professional phone repairs at your door</h1>
+
+//       {/* Desktop and tablet: the flyer exactly as designed */}
+//       <section className="mq-flyer">
+//         <img
+//           src={`${IMG}mqf-flyer.jpg`}
+//           alt="Mobile Quick Fix. Screen repairs, battery replacement, water damage, general repairs, all mobile brands and charging port repair for phones, tablets, laptops and gaming consoles. We come to your door for repair."
+//         />
+//       </section>
+
+//       {/* Phones: the same flyer cut into pieces and stacked */}
+//       <section className="mq-stack">
+//         <img className="mq-logo" src={`${IMG}mqf-logo.jpg`} alt="Mobile Quick Fix. Fast, reliable, professional." />
+//         <img className="mq-script" src={`${IMG}mqf-script.jpg`} alt="Get your device back in no time!" />
+
+//         <ul className="mq-services">
+//           {services.map(s => (
+//             <li key={s.img}><img src={`${IMG}${s.img}`} alt={s.label} /></li>
+//           ))}
+//         </ul>
+
+//         <img className="mq-strip" src={`${IMG}mqf-brands.jpg`} alt="We repair Apple, Samsung, Xiaomi, Huawei, Oppo, OnePlus and Motorola" />
+//         <img className="mq-strip" src={`${IMG}mqf-categories.jpg`} alt="Phones, tablets, laptops, gaming consoles" />
+
+//         <div className="mq-green">
+//           <img className="mq-house" src={`${IMG}mqf-house.jpg`} alt="" />
+//           <img className="mq-devices" src={`${IMG}mqf-devices.jpg`} alt="We come to your door for repair!" />
+//         </div>
+//       </section>
+
+//       <div className="mq-contactbar">
+//         <a href={PHONE_TEL} className="mq-cta"><FontAwesomeIcon icon={faPhone} /> Call {PHONE_DISPLAY}</a>
+//         <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" className="mq-cta mq-cta-ghost">
+//           <FontAwesomeIcon icon={faCommentDots} /> WhatsApp for a quote
+//         </a>
+//       </div>
+//     </div>
+//   );
+// }
 
 // import React, { useState, useEffect, useRef } from 'react';
 // import { useNavigate } from 'react-router-dom';
