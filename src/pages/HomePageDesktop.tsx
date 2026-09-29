@@ -363,7 +363,6 @@
 //   );
 // }
 // / <reference types="vite/client" />
-
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -395,10 +394,13 @@ import {
   faEnvelope,
   faSignal,
   faWifi,
+  faCheck,
+  faChevronLeft,
+  faCaretRight,
   IconDefinition,
 } from '@fortawesome/free-solid-svg-icons';
 import './HomePageDesktop.css';
-import { cleanImage, CleanMode } from './cleanImage';
+
 /* ------------------------------------------------------------------
    Business details
 ------------------------------------------------------------------- */
@@ -502,6 +504,11 @@ const PRICE_TABLES: Record<DeviceKey, string> = {
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.replace(/\/+$/, '');
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+
+/* Card payments: a small Supabase Edge Function (create-checkout) starts a
+   Stripe Checkout page. It works out the amount itself from your price
+   tables, so nobody can change the price in their browser. */
+const CHECKOUT_URL = SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/create-checkout` : '';
 
 type Prices = Record<string, number>;
 
@@ -632,6 +639,94 @@ const modelMatches = (name: string, query: string) => {
 /* Brand buttons for a device: the usual list plus any new brand folders */
 const brandsFor = (device: DeviceKey) => [...BRANDS[device], ...EXTRA_BRANDS[device]];
 
+/* Every model on the site, so the main search box can suggest them */
+type SearchHit = { device: DeviceKey; brand: string; entry: ModelEntry };
+const ALL_MODELS: SearchHit[] = Object.entries(MODELS).flatMap(([key, list]) => {
+  const i = key.indexOf(':');
+  const device = key.slice(0, i) as DeviceKey;
+  const brand = key.slice(i + 1);
+  return list.map((entry) => ({ device, brand, entry }));
+});
+const findModels = (query: string, limit = 6): SearchHit[] => {
+  const q = query.trim();
+  if (q.length < 2) return [];
+  return ALL_MODELS
+    .filter((h) => modelMatches(h.entry.name, q) || modelMatches(`${h.brand} ${h.entry.name}`, q))
+    .slice(0, limit);
+};
+const deviceLabel = (k: DeviceKey) => DEVICES.find((d) => d.key === k)?.label ?? '';
+
+/* ------------------------------------------------------------------
+   FINALIZE STEP SETTINGS: change these to suit your shop
+------------------------------------------------------------------- */
+type MethodKey = 'postal' | 'callout';
+const SERVICE_METHODS: { key: MethodKey; title: string; sub: string; fee: number }[] = [
+  { key: 'postal', title: 'Nationwide Postal Repair', sub: '24 - 48 Hours Process time', fee: 12 },
+  { key: 'callout', title: 'Call-Out Repair', sub: 'Birmingham & Solihull Covered', fee: 20 },
+];
+/* Where customers post their device (shown under Postal Repair) */
+const POSTAL_ADDRESS = {
+  area: 'NORTHFIELD',
+  lines: ['214 Turves Green', 'B31 4BN', 'Birmingham'],
+};
+const CALLOUT_SLOTS = ['09:00 — 12:00', '18:00 — 21:00'];
+const DEPOSIT = 10;
+const TERMS_URL = '/terms';
+const COUNTRIES = ['United Kingdom', 'Ireland'];
+const WHEN_OPTIONS = ['As soon as possible', 'Today', 'Tomorrow morning', 'Tomorrow afternoon', 'Tomorrow evening', 'This weekend', 'Other'];
+
+const EMPTY_FORM = {
+  firstName: '', lastName: '', phone: '', email: '', company: '', notes: '',
+  house: '', street: '', city: '', postcode: '', country: '',
+  when: 'As soon as possible', otherDate: '', otherTime: '',
+};
+type FormData = typeof EMPTY_FORM;
+
+/* £ 198.00 */
+const money2 = (n: number) =>
+  `£ ${n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+/* 2026-09-29 <-> dates */
+const dayKey = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const fromKey = (k: string) => {
+  const [y, m, d] = k.split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
+/* "Tuesday 29-09-2026" */
+const longDate = (k: string) => {
+  const d = fromKey(k);
+  return `${d.toLocaleDateString('en-GB', { weekday: 'long' })} ${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+};
+
+/* Progress is kept if the page is refreshed (cleared when the browser tab closes) */
+const SAVE_KEY = 'bk-progress';
+type Saved = {
+  step: 1 | 2 | 3;
+  device: DeviceKey | null;
+  brand: string | null;
+  model: string;
+  modelImg: string | null;
+  repairs: string[];
+  form: Partial<FormData>;
+  method: MethodKey | null;
+  payOption: 'deposit' | 'full';
+  customerType: 'private' | 'business';
+  custDate: string;
+  slot: string;
+};
+const loadSaved = (): Partial<Saved> => {
+  try {
+    return JSON.parse(sessionStorage.getItem(SAVE_KEY) || '{}') as Partial<Saved>;
+  } catch {
+    return {};
+  }
+};
+
+/* UK phone numbers and postcodes */
+const phoneOk = (t: string) => /^(\+44|0044|0)\d{9,10}$/.test(t.replace(/[\s()-]/g, ''));
+const emailOk = (t: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(t.trim());
+const postcodeOk = (t: string) => /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i.test(t.trim());
+
 
 /* Use a different logo file for a brand on one device type */
 const LOGO_OVERRIDES: Record<string, string> = { 'laptop:Huawei': 'huawei-laptop' };
@@ -675,6 +770,35 @@ const Tile: React.FC<{
     {children}
   </div>
 );
+
+/* Square tick box used on the Finalize step */
+const Check: React.FC<{ on: boolean }> = ({ on }) => (
+  <span className={`bk-cb ${on ? 'is-on' : ''}`} aria-hidden="true">
+    {on && <FontAwesomeIcon icon={faCheck} />}
+  </span>
+);
+
+/* Text box with its label sitting on the border */
+const Field: React.FC<{ id: string; label: string; required?: boolean; invalid?: boolean; full?: boolean; children: React.ReactNode }> = ({ id, label, required, invalid, full, children }) => (
+  <div className={`bk-fl ${full ? 'is-full' : ''} ${invalid ? 'is-invalid' : ''}`}>
+    <label htmlFor={id}>{label}{required && <span className="bk-req">*</span>}</label>
+    {children}
+  </div>
+);
+
+/* Icons for the service methods */
+const MethodIcon: React.FC<{ k: MethodKey }> = ({ k }) => {
+  const common = { viewBox: '0 0 48 48', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, className: 'bk-method-icon', 'aria-hidden': true };
+  if (k === 'postal') return (
+    <svg {...common}><path d="M24 6 42 14v20L24 42 6 34V14z" /><path d="M6 14l18 8 18-8M24 22v20" /><path d="M15 10l18 8v7" /></svg>
+  );
+  return (
+    <svg {...common}>
+      <rect x="11" y="4" width="22" height="40" rx="3" /><path d="M19 39h6" />
+      <path d="M31 33s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z" fill="#fff" /><circle cx="31" cy="22" r="2.5" />
+    </svg>
+  );
+};
 
 /* Outline device icons */
 const DeviceIcon: React.FC<{ k: DeviceKey }> = ({ k }) => {
@@ -885,6 +1009,17 @@ const CLOSE_MS = 350; /* keep in step with the bk-lift animation in the CSS */
 const ModelHelp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [tab, setTab] = useState<HelpTab>('ios');
   const [closing, setClosing] = useState(false);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  /* Stop the page behind scrolling while the popup is open */
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    closeRef.current?.focus();
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
 
   /* Play the slide-up animation, then remove the popup */
   const close = () => {
@@ -902,7 +1037,7 @@ const ModelHelp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   return (
     <div className={`bk-modal-backdrop ${closing ? 'is-closing' : ''}`} onClick={close}>
       <div className="bk-modal" role="dialog" aria-modal="true" aria-labelledby="bk-help-title" onClick={(e) => e.stopPropagation()}>
-        <button className="bk-modal-close" onClick={close} aria-label="Close">
+        <button ref={closeRef} className="bk-modal-close" onClick={close} aria-label="Close">
           <FontAwesomeIcon icon={faXmark} />
         </button>
 
@@ -947,13 +1082,16 @@ const BookingPage: React.FC = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [device, setDevice] = useState<DeviceKey | null>(null);
-  const [brand, setBrand] = useState<string | null>(null);
-  const [model, setModel] = useState('');
-  const [modelImg, setModelImg] = useState<string | null>(null);
+  const [saved] = useState(loadSaved);
+  const [step, setStep] = useState<1 | 2 | 3>(saved.device ? saved.step ?? 1 : 1);
+  const [device, setDevice] = useState<DeviceKey | null>(saved.device ?? null);
+  const [brand, setBrand] = useState<string | null>(saved.brand ?? null);
+  const [model, setModel] = useState(saved.model ?? '');
+  const [modelImg, setModelImg] = useState<string | null>(saved.modelImg ?? null);
   const [search, setSearch] = useState('');
-  const [repairs, setRepairs] = useState<string[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [activeHit, setActiveHit] = useState(-1);
+  const [repairs, setRepairs] = useState<string[]>(saved.repairs ?? []);
   const [showHelp, setShowHelp] = useState(false);
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [modelSearch, setModelSearch] = useState('');
@@ -974,8 +1112,35 @@ const BookingPage: React.FC = () => {
       setLoadingKey(null);
     }, 700);
   };
-  const [form, setForm] = useState({ name: '', phone: '', postcode: '', when: 'As soon as possible', notes: '' });
+  const [form, setForm] = useState<FormData>({ ...EMPTY_FORM, ...(saved.form ?? {}) });
+  const [method, setMethod] = useState<MethodKey | null>(saved.method ?? null);
+  const [custDate, setCustDate] = useState(saved.custDate && saved.custDate >= dayKey(new Date()) ? saved.custDate : '');
+  const [slot, setSlot] = useState(saved.slot ?? '');
+  const [dayStart, setDayStart] = useState(0);
+  const [customerType, setCustomerType] = useState<'private' | 'business'>(saved.customerType ?? 'private');
+  const [payOption, setPayOption] = useState<'deposit' | 'full'>(saved.payOption ?? 'full');
+  const [paying, setPaying] = useState(false);
+  const [payFailed, setPayFailed] = useState(false);
+  const paidReturn = params.get('paid') === '1';
+  const [terms, setTerms] = useState(false);
+  const [orderOpen, setOrderOpen] = useState(false);
   const [error, setError] = useState('');
+  const [invalid, setInvalid] = useState<string[]>([]);
+  const hits = useMemo(() => findModels(search), [search]);
+
+  /* Save progress so a refresh doesn't lose it */
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(SAVE_KEY, JSON.stringify({ step, device, brand, model, modelImg, repairs, form, method, custDate, slot, payOption, customerType }));
+    } catch {
+      /* private browsing: nothing to do */
+    }
+  }, [step, device, brand, model, modelImg, repairs, form, method, custDate, slot, payOption, customerType]);
+
+  const setField = (key: keyof typeof form, value: string) => {
+    setForm((f) => ({ ...f, [key]: value }));
+    setInvalid((v) => v.filter((k) => k !== key));
+  };
 
   /* Put the cursor in the model search box when a model list opens (not on phones,
      where it would pop the keyboard up) */
@@ -984,16 +1149,6 @@ const BookingPage: React.FC = () => {
       modelSearchRef.current.focus({ preventScroll: true });
     }
   }, [brand, otherModel]);
-
-  /* Load the Montserrat font once */
-  useEffect(() => {
-    if (document.getElementById('bk-font')) return;
-    const link = document.createElement('link');
-    link.id = 'bk-font';
-    link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@800&display=swap';
-    document.head.appendChild(link);
-  }, []);
 
   /* Pre-select from links like /book?device=phone&service=screen */
   useEffect(() => {
@@ -1043,10 +1198,37 @@ const BookingPage: React.FC = () => {
     navigate('/');
   };
 
+  /* Clicking a finished step in the stepper jumps back to it */
+  const goToStep = (n: 1 | 2 | 3) => {
+    setError('');
+    setRepairHint('');
+    setStep(n);
+    scrollTop();
+  };
+
+  /* A suggestion from the main search: jump straight to its repairs and prices */
+  const pickHit = (h: SearchHit) => {
+    setDevice(h.device);
+    setBrand(h.brand);
+    setModel(h.entry.name);
+    setModelImg(h.entry.url);
+    setOtherModel(false);
+    setModelSearch('');
+    setSearch('');
+    setSearchOpen(false);
+    setActiveHit(-1);
+    setRepairs((r) => r.filter((k) => REPAIRS[h.device].some((x) => x.key === k)));
+    setStep(2);
+    scrollTop();
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const text = search.trim();
     if (!text) return;
+    const hit = hits[activeHit] ?? hits[0];
+    if (hit) return pickHit(hit);
+    setSearchOpen(false);
     const d = guessDevice(text);
     setDevice(d);
     setBrand(null);
@@ -1088,7 +1270,30 @@ const BookingPage: React.FC = () => {
     anyPriced && onRequestCount
       ? `Plus ${onRequestCount} repair${onRequestCount > 1 ? 's' : ''} priced on request`
       : '';
-  const taxLabel = inclTax ? `incl. tax (${Math.round(TAX_RATE * 100)}%)` : 'excl. tax';
+
+  /* Finalize step: service method, date, totals */
+  const todayKey = dayKey(new Date());
+  const methodInfo = SERVICE_METHODS.find((m) => m.key === method) ?? null;
+  const fee = methodInfo?.fee ?? 0;
+  const grandTotal = pricedTotal + fee;
+  const grandText = anyPriced || fee ? money2(grandTotal) : 'On request';
+  const days = Array.from({ length: 8 }, (_, i) => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + dayStart + i);
+    return d;
+  });
+  /* Today's slots that have already started can't be booked */
+  const slotPast = (s: string, dateKey = custDate) => dateKey === todayKey && Number(s.slice(0, 2)) <= new Date().getHours();
+  const chooseMethod = (k: MethodKey) => {
+    setError('');
+    setMethod((m) => (m === k ? null : k));
+    if (k === 'callout' && !custDate) setCustDate(todayKey);
+  };
+  const chooseDate = (k: string) => {
+    setCustDate(k);
+    if (slot && slotPast(slot, k)) setSlot('');
+  };
 
   /* "Get A Quote": send the chosen repairs and prices on WhatsApp */
   const getQuote = () => {
@@ -1097,7 +1302,7 @@ const BookingPage: React.FC = () => {
       '',
       `Device: ${deviceName}`,
       `Repair: ${selected.map((r) => `${r.label} (${pricesLoading ? 'price on request' : priceText(r.key).toLowerCase()})`).join(', ') || 'Not sure'}`,
-      anyPriced && !pricesLoading ? `Total: ${money(pricedTotal)}${onRequestCount ? ' + price on request' : ''} ${taxLabel}` : '',
+      anyPriced && !pricesLoading ? `Total: ${money(pricedTotal)}${onRequestCount ? ' + price on request' : ''}` : '',
     ].filter(Boolean);
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank', 'noopener');
   };
@@ -1112,28 +1317,119 @@ const BookingPage: React.FC = () => {
     scrollTop();
   };
 
-  const repairLabels = device
-    ? REPAIRS[device].filter((r) => repairs.includes(r.key)).map((r) => r.label)
-    : [];
+  /* Back from Stripe without paying */
+  useEffect(() => {
+    if (params.get('cancelled') === '1') {
+      setStep(3);
+      setError('Payment cancelled. You have not been charged.');
+    }
+  }, [params]);
+
+  /* Repairs priced "on request" can't be paid in full online, only the deposit */
+  const canPayFull = pricesLoading || onRequestCount === 0;
+  useEffect(() => {
+    if (!canPayFull && payOption === 'full') setPayOption('deposit');
+  }, [canPayFull, payOption]);
+
+  /* When the customer wants the repair, in words */
+  const whenText =
+    method === 'callout' ? (custDate ? `${longDate(custDate)}${slot ? `, ${slot}` : ''}` : '')
+    : form.when === 'Other' ? (form.otherDate ? `${longDate(form.otherDate)} at ${form.otherTime}` : '')
+    : form.when;
+  const payText = payOption === 'deposit'
+    ? `deposit of ${money2(DEPOSIT)}, the rest after the repair`
+    : `full amount of ${money2(grandTotal)}`;
+
+  const bookingMessage = (paymentLine: string) => [
+    'Hi Mobile Quick Fix, I’d like to book a repair.',
+    '',
+    `Device: ${deviceName}`,
+    `Repair: ${selected.map((r) => `${r.label} (${priceText(r.key).toLowerCase()})`).join(', ') || 'Not sure'}`,
+    `Service: ${methodInfo?.title} (${money2(fee)})`,
+    `${method === 'callout' ? 'Appointment' : 'When'}: ${whenText}`,
+    `Total: ${money2(grandTotal)}${onRequestCount ? ' + price on request' : ''}`,
+    `Payment: ${paymentLine}`,
+    '',
+    `Customer: ${customerType === 'business' ? `Business (${form.company})` : 'Private'}`,
+    `Name: ${form.firstName} ${form.lastName}`,
+    `Phone: ${form.phone}`,
+    `Email: ${form.email}`,
+    `Address: ${form.house} ${form.street}, ${form.city}, ${form.postcode.toUpperCase()}, ${form.country}`,
+    form.notes ? `Notes: ${form.notes}` : '',
+  ].filter((l, i, a) => l !== '' || a[i - 1] !== '').join('\n');
+
+  const sendWhatsApp = (paymentLine: string) => {
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(bookingMessage(paymentLine))}`, '_blank', 'noopener');
+  };
+
+  /* Checks the form. Returns true when everything is filled in correctly. */
+  const validate = () => {
+    const fail = (m: string) => { setError(m); return false; };
+    const need: (keyof FormData)[] = ['firstName', 'lastName', 'phone', 'email'];
+    if (customerType === 'business') need.push('company');
+    if (method) need.push('house', 'street', 'city', 'postcode', 'country');
+    if (method !== 'callout' && form.when === 'Other') need.push('otherDate', 'otherTime');
+    const missing = need.filter((k) => !form[k].trim());
+    const bad: string[] = [...missing];
+    if (form.phone.trim() && !phoneOk(form.phone)) bad.push('phone');
+    if (form.email.trim() && !emailOk(form.email)) bad.push('email');
+    if (method && form.postcode.trim() && !postcodeOk(form.postcode)) bad.push('postcode');
+    setInvalid(bad);
+
+    if (!method) return fail('Please choose Postal Repair or Call-Out Repair.');
+    if (method === 'callout' && (!custDate || !slot)) return fail('Please pick a date and time for your call-out.');
+    if (missing.length) return fail('Please fill in the boxes marked in red.');
+    if (bad.includes('phone')) return fail('Please check your phone number. It should be a UK number, like 07700 900123.');
+    if (bad.includes('email')) return fail('Please check your email address.');
+    if (bad.includes('postcode')) return fail('Please check your postcode, for example SW1A 1AA.');
+    if (!terms) return fail('Please accept the terms & conditions.');
+    setError('');
+    return true;
+  };
+
+  /* Ask the Edge Function for a Stripe Checkout page, then go there */
+  const payWithStripe = async () => {
+    const failed = (why: string) => {
+      setError(`${why} You can send your booking on WhatsApp instead.`);
+      setPayFailed(true);
+      setPaying(false);
+    };
+    if (!CHECKOUT_URL || !SUPABASE_KEY) return failed('Card payments aren’t switched on yet.');
+    setPaying(true);
+    setPayFailed(false);
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json', apikey: SUPABASE_KEY };
+      if (SUPABASE_KEY.startsWith('eyJ')) headers.Authorization = `Bearer ${SUPABASE_KEY}`;
+      const res = await fetch(CHECKOUT_URL, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          device, brand, model: model.trim(), deviceName, repairs, method, payOption,
+          when: whenText,
+          customer: {
+            type: customerType, company: form.company, firstName: form.firstName, lastName: form.lastName,
+            phone: form.phone, email: form.email, notes: form.notes,
+            address: `${form.house} ${form.street}, ${form.city}, ${form.postcode.toUpperCase()}, ${form.country}`,
+          },
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (!res.ok || !data.url) return failed(data.error ? `${data.error}.` : 'The payment page couldn’t be opened.');
+      window.location.href = data.url;
+    } catch {
+      failed('The payment page couldn’t be opened.');
+    }
+  };
 
   const sendBooking = () => {
-    if (!form.name.trim() || !form.phone.trim() || !form.postcode.trim()) {
-      setError('Add your name, phone number and postcode so we can confirm your booking.');
-      return;
-    }
-    const msg = [
-      'Hi Mobile Quick Fix, I’d like to book a repair.',
-      '',
-      `Device: ${deviceName}`,
-      `Repair: ${repairLabels.join(', ') || 'Not sure'}`,
-      `When: ${form.when}`,
-      '',
-      `Name: ${form.name}`,
-      `Phone: ${form.phone}`,
-      `Postcode: ${form.postcode}`,
-      form.notes ? `Notes: ${form.notes}` : '',
-    ].filter((l, i, a) => l !== '' || a[i - 1] !== '').join('\n');
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+    if (paying || !validate()) return;
+    payWithStripe();
+  };
+
+  /* After paying: clear everything for the next customer */
+  const startOver = () => {
+    try { sessionStorage.removeItem(SAVE_KEY); } catch { /* nothing to clear */ }
+    window.location.href = window.location.pathname;
   };
 
   const heading =
@@ -1141,8 +1437,30 @@ const BookingPage: React.FC = () => {
     : step === 2 ? <>Select your <b>repair</b></>
     : <>Finalize your <b>order</b></>;
 
+  if (paidReturn) {
+    return (
+      <div className="bk-page">
+        <div className="bk-wrap">
+          <div className="bk-success">
+            <span className="bk-success-icon"><FontAwesomeIcon icon={faCheck} /></span>
+            <h1>Payment received</h1>
+            <p>
+              Thank you{form.firstName ? `, ${form.firstName}` : ''}! Your {methodInfo ? methodInfo.title : 'repair'} for
+              the <b>{deviceName}</b> is booked{method === 'callout' && whenText ? ` for ${whenText}` : ''}.
+            </p>
+            <p className="bk-success-small">Your receipt will be emailed to you. Tap below to send us your booking details on WhatsApp so we can get started.</p>
+            <button type="button" className="bk-confirm" onClick={() => sendWhatsApp(`Paid by card: ${payText}`)}>
+              Send details on WhatsApp
+            </button>
+            <button type="button" className="bk-link bk-success-again" onClick={startOver}>Book another repair</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="bk-page">
+    <div className={`bk-page ${step === 2 && selected.length ? 'has-mobile-bar' : ''}`}>
       <div className="bk-wrap">
         <h2 className="bk-page-title">Use the system below to get a price or book your repair!</h2>
 
@@ -1152,8 +1470,23 @@ const BookingPage: React.FC = () => {
             const label = `${a} ${b}`;
             const n = i + 1;
             const state = n < step ? 'is-done' : n === step ? 'is-current' : '';
+            const canGo = n < step;
             return (
-              <li key={label} className={`bk-stepper-item ${state}`} aria-current={n === step ? 'step' : undefined}>
+              <li
+                key={label}
+                className={`bk-stepper-item ${state} ${canGo ? 'is-clickable' : ''}`}
+                aria-current={n === step ? 'step' : undefined}
+                role={canGo ? 'button' : undefined}
+                tabIndex={canGo ? 0 : undefined}
+                aria-label={canGo ? `Back to ${label}` : undefined}
+                onClick={canGo ? () => goToStep(n as 1 | 2 | 3) : undefined}
+                onKeyDown={canGo ? (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    goToStep(n as 1 | 2 | 3);
+                  }
+                } : undefined}
+              >
                 <span className="bk-stepper-dot">{n}</span>
                 <span className="bk-stepper-label">{a} <b>{b}</b></span>
               </li>
@@ -1181,14 +1514,14 @@ const BookingPage: React.FC = () => {
               <span className="bk-device-type">{deviceInfo?.label}</span>
             </div>
           </div>
-        ) : (
+        ) : step !== 3 ? (
           <div className="bk-heading">
             <button className="bk-back" onClick={goBack} aria-label="Go back">
               <FontAwesomeIcon icon={faArrowLeft} />
             </button>
             <h1>{heading}</h1>
           </div>
-        )}
+        ) : null}
 
         {/* ---------------- Step 1 ---------------- */}
         {step === 1 && (
@@ -1203,14 +1536,48 @@ const BookingPage: React.FC = () => {
                     <input
                       id="bk-search"
                       value={search}
-                      onChange={(e) => setSearch(e.target.value)}
+                      onChange={(e) => { setSearch(e.target.value); setSearchOpen(true); setActiveHit(-1); }}
+                      onFocus={() => setSearchOpen(true)}
+                      onBlur={() => setSearchOpen(false)}
+                      onKeyDown={(e) => {
+                        if (!hits.length) return;
+                        if (e.key === 'ArrowDown') { e.preventDefault(); setSearchOpen(true); setActiveHit((i) => (i + 1) % hits.length); }
+                        else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveHit((i) => (i <= 0 ? hits.length - 1 : i - 1)); }
+                        else if (e.key === 'Escape') setSearchOpen(false);
+                      }}
                       placeholder="11 Pro, or iPhone 11"
                       autoComplete="off"
+                      role="combobox"
+                      aria-expanded={searchOpen && hits.length > 0}
+                      aria-controls="bk-suggest"
+                      aria-activedescendant={activeHit >= 0 ? `bk-hit-${activeHit}` : undefined}
                     />
                     <button type="submit" aria-label="Search">
                       <FontAwesomeIcon icon={faMagnifyingGlass} />
                     </button>
                   </div>
+                  {searchOpen && hits.length > 0 && (
+                    <ul id="bk-suggest" className="bk-suggest" role="listbox">
+                      {hits.map((h, i) => (
+                        <li
+                          key={`${h.device}:${h.brand}:${h.entry.name}`}
+                          id={`bk-hit-${i}`}
+                          role="option"
+                          aria-selected={i === activeHit}
+                          className={`bk-suggest-item ${i === activeHit ? 'is-active' : ''}`}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onMouseEnter={() => setActiveHit(i)}
+                          onClick={() => pickHit(h)}
+                        >
+                          <img src={h.entry.url} alt="" className="bk-suggest-img" loading="lazy" />
+                          <span className="bk-suggest-text">
+                            <span className="bk-suggest-name">{h.entry.name}</span>
+                            <span className="bk-suggest-meta">{h.brand} · {deviceLabel(h.device)}</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </form>
                 <Tile className="bk-help-btn" onClick={() => setShowHelp(true)}>
                   <HelpPhoneIcon />
@@ -1367,6 +1734,7 @@ const BookingPage: React.FC = () => {
 
         {/* ---------------- Step 2 ---------------- */}
         {step === 2 && device && (
+          <>
           <div className="bk-repair-layout">
             <div className="bk-repair-main">
               <div className="bk-repair-top">
@@ -1397,6 +1765,7 @@ const BookingPage: React.FC = () => {
                     const p = priceOf(r.key);
                     return (
                       <Tile key={r.key} className={`bk-repair-card ${on ? 'is-selected' : ''}`} pressed={on} onClick={() => toggleRepair(r.key)}>
+                        <span className="bk-check" aria-hidden="true" />
                         <span className="bk-repair-text">
                           <strong>{r.label}</strong>
                           {r.sub && <small>{r.sub}</small>}
@@ -1426,7 +1795,12 @@ const BookingPage: React.FC = () => {
                   {selected.map((r) => (
                     <li key={r.key}>
                       <span>{r.label}</span>
-                      <span className="bk-quote-price">{pricesLoading ? '…' : priceText(r.key)}</span>
+                      <span className="bk-quote-right">
+                        <span className="bk-quote-price">{pricesLoading ? '…' : priceText(r.key)}</span>
+                        <button type="button" className="bk-quote-remove" onClick={() => toggleRepair(r.key)} aria-label={`Remove ${r.label}`}>
+                          <FontAwesomeIcon icon={faXmark} />
+                        </button>
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -1438,77 +1812,340 @@ const BookingPage: React.FC = () => {
               </div>
 
               <div className="bk-quote-total">
-                <span>
-                  Total
-                  <small>{taxLabel}</small>
-                </span>
+                <span>Total</span>
                 <span>{pricesLoading && selected.length ? '…' : totalText}</span>
               </div>
               {totalNote && !pricesLoading && <p className="bk-quote-note">{totalNote}</p>}
 
-              <button type="button" className="bk-quote-btn" onClick={getQuote}>
+              {/* <button type="button" className="bk-quote-btn" onClick={getQuote}>
                 <b>Get A Quote</b>
                 <small>Send your repairs to us on WhatsApp</small>
-              </button>
+              </button> */}
               <button type="button" className="bk-book-btn" onClick={bookNow}>
                 <b>Book Repair Now</b>
                 <small>{selected.length ? 'Next: your details' : 'Select which service?'}</small>
               </button>
             </aside>
           </div>
+
+          {selected.length > 0 && (
+            <div className="bk-mobile-bar">
+              <div className="bk-mobile-bar-info">
+                <small>{selected.length} repair{selected.length > 1 ? 's' : ''} selected</small>
+                <b>{pricesLoading ? '…' : totalText}</b>
+              </div>
+              <button type="button" className="bk-mobile-bar-btn" onClick={bookNow}>Book Repair Now</button>
+            </div>
+          )}
+          </>
         )}
 
-        {/* ---------------- Step 3 ---------------- */}
+        {/* ---------------- Step 3: Finalize appointment ---------------- */}
         {step === 3 && device && (
-          <div className="bk-final">
-            <aside className="bk-summary">
-              <h2>Your repair</h2>
-              <dl>
-                <dt>Device</dt><dd>{deviceName}</dd>
-                <dt>Repair</dt><dd>{repairLabels.join(', ')}</dd>
-              </dl>
-              <p className="bk-summary-note">We’ll reply with a price and a time before anything is booked.</p>
-            </aside>
-
-            <div className="bk-card bk-form">
-              <div className="bk-field">
-                <label htmlFor="f-name">Your name</label>
-                <input id="f-name" className="bk-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoComplete="name" />
+          <div className="bk-fin">
+            {/* Left: service method */}
+            <div className="bk-fin-left">
+              <div className="bk-heading bk-fin-heading">
+                <button className="bk-back" onClick={goBack} aria-label="Go back">
+                  <FontAwesomeIcon icon={faArrowLeft} />
+                </button>
+                <h1>Finalize <b>appointment</b></h1>
               </div>
-              <div className="bk-field-row">
-                <div className="bk-field">
-                  <label htmlFor="f-phone">Phone number</label>
-                  <input id="f-phone" className="bk-input" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} autoComplete="tel" />
+
+              <h3 className="bk-fin-label">Select Service Method</h3>
+
+              {SERVICE_METHODS.map((m) => {
+                const on = method === m.key;
+                return (
+                  <div key={m.key} className={`bk-method ${on ? 'is-selected' : ''}`}>
+                    <Tile className="bk-method-head" onClick={() => chooseMethod(m.key)} pressed={on} label={`${m.title}, ${money2(m.fee)}`}>
+                      <MethodIcon k={m.key} />
+                      <span className="bk-method-text">
+                        <span className="bk-method-title">{m.title} <span className="bk-badge">{money2(m.fee)}</span></span>
+                        <span className="bk-method-sub">{m.sub}</span>
+                      </span>
+                      <Check on={on} />
+                    </Tile>
+
+                    {on && (
+                      <div className="bk-method-body">
+                        {m.key === 'callout' && (
+                          <>
+                            <div className="bk-line">
+                              <span className="bk-line-dot" />
+                              <span>Select <b>Date</b></span>
+                              <span className="bk-line-rule" />
+                              <button type="button" className="bk-arrow" onClick={() => setDayStart((d) => Math.max(0, d - 8))} disabled={dayStart === 0} aria-label="Earlier dates">
+                                <FontAwesomeIcon icon={faChevronLeft} />
+                              </button>
+                              <button type="button" className="bk-arrow" onClick={() => setDayStart((d) => Math.min(56, d + 8))} disabled={dayStart >= 56} aria-label="Later dates">
+                                <FontAwesomeIcon icon={faChevronRight} />
+                              </button>
+                            </div>
+                            <div className="bk-days">
+                              {days.map((d) => {
+                                const k = dayKey(d);
+                                return (
+                                  <Tile key={k} className={`bk-day ${custDate === k ? 'is-selected' : ''}`} pressed={custDate === k} onClick={() => chooseDate(k)} label={longDate(k)}>
+                                    <span>{d.toLocaleDateString('en-GB', { weekday: 'short' })}</span>
+                                    <b>{String(d.getDate()).padStart(2, '0')}</b>
+                                  </Tile>
+                                );
+                              })}
+                            </div>
+
+                            <div className="bk-line">
+                              <span className="bk-line-dot" />
+                              <span>Select <b>Time</b></span>
+                              <span className="bk-line-rule" />
+                            </div>
+                            <div className="bk-slots">
+                              {CALLOUT_SLOTS.map((t) => {
+                                const past = slotPast(t);
+                                return (
+                                  <Tile
+                                    key={t}
+                                    className={`bk-slot ${slot === t ? 'is-selected' : ''} ${past ? 'is-disabled' : ''}`}
+                                    pressed={slot === t}
+                                    onClick={() => { if (!past) setSlot(t); }}
+                                    label={past ? `${t}, no longer available today` : t}
+                                  >
+                                    {t}
+                                  </Tile>
+                                );
+                              })}
+                            </div>
+                          </>
+                        )}
+
+                        <div className="bk-line">
+                          <span className="bk-line-dot" />
+                          <span>Your <b>Address</b></span>
+                          <span className="bk-line-rule" />
+                        </div>
+                        <div className="bk-fl-grid">
+                          <Field id="f-house" label="House number" required invalid={invalid.includes('house')}>
+                            <input id="f-house" className="bk-fl-input" value={form.house} onChange={(e) => setField('house', e.target.value)} autoComplete="address-line1" />
+                          </Field>
+                          <Field id="f-street" label="Streetname" required invalid={invalid.includes('street')}>
+                            <input id="f-street" className="bk-fl-input" value={form.street} onChange={(e) => setField('street', e.target.value)} autoComplete="address-line2" />
+                          </Field>
+                          <Field id="f-city" label="City" required invalid={invalid.includes('city')}>
+                            <input id="f-city" className="bk-fl-input" value={form.city} onChange={(e) => setField('city', e.target.value)} autoComplete="address-level2" />
+                          </Field>
+                          <Field id="f-post" label="Postcode" required invalid={invalid.includes('postcode')}>
+                            <input id="f-post" className="bk-fl-input" value={form.postcode} onChange={(e) => setField('postcode', e.target.value.toUpperCase())} autoComplete="postal-code" />
+                          </Field>
+                          {/* <Field id="f-country" label="Country" required full invalid={invalid.includes('country')}>
+                            <select id="f-country" className="bk-fl-input" value={form.country} onChange={(e) => setField('country', e.target.value)} autoComplete="country-name">
+                              <option value="">-- Select --</option>
+                              {COUNTRIES.map((c) => <option key={c}>{c}</option>)}
+                            </select>
+                          </Field> */}
+                        </div>
+
+                        {m.key === 'postal' && (
+                          <div className="bk-post-addr">
+                            <span className="bk-post-area">{POSTAL_ADDRESS.area}</span>
+                            <span className="bk-post-lines">
+                              {POSTAL_ADDRESS.lines.map((l) => <span key={l}>{l}</span>)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Right: order summary and your details */}
+            <div className="bk-fin-right">
+              <div className="bk-fin-device">
+                <span className="bk-fin-pic">
+                  {modelImg ? (
+                    <ImgOr src={modelImg} alt="" className="bk-fin-img">
+                      <DeviceIcon k={device} />
+                    </ImgOr>
+                  ) : (
+                    <DeviceIcon k={device} />
+                  )}
+                </span>
+                <div>
+                  <h2 className="bk-fin-name">{deviceName}</h2>
+                  <span className="bk-fin-sub">repair</span>
                 </div>
-                <div className="bk-field">
-                  <label htmlFor="f-post">Postcode</label>
-                  <input id="f-post" className="bk-input" value={form.postcode} onChange={(e) => setForm({ ...form, postcode: e.target.value.toUpperCase() })} autoComplete="postal-code" />
+              </div>
+
+              <div className="bk-order" id="bk-order">
+                <p className="bk-order-device">{deviceName}</p>
+
+                {orderOpen && (
+                  <>
+                    <ul className="bk-order-lines">
+                      {selected.map((r) => {
+                        const p = priceOf(r.key);
+                        return (
+                          <li key={r.key}>
+                            <span>{r.label}</span>
+                            <span className="bk-order-box">{pricesLoading ? '…' : p != null ? money2(p).slice(2) : 'On request'}</span>
+                          </li>
+                        );
+                      })}
+                      {methodInfo && (
+                        <li>
+                          <span>{methodInfo.title}</span>
+                          <span className="bk-order-box">{money2(fee).slice(2)}</span>
+                        </li>
+                      )}
+                    </ul>
+                    <div className="bk-order-row">
+                      <span>sub-total</span>
+                      <span>{money2(grandTotal).slice(2)}</span>
+                    </div>
+                  </>
+                )}
+
+                <div className="bk-order-total">
+                  <span>Total</span>
+                  <span>{pricesLoading ? '…' : grandText}</span>
+                </div>
+                {onRequestCount > 0 && !pricesLoading && (
+                  <p className="bk-order-note">+ {onRequestCount} repair{onRequestCount > 1 ? 's' : ''} priced on request</p>
+                )}
+
+                <div className="bk-order-method">
+                  {methodInfo ? (
+                    <>
+                      <span>{methodInfo.title}</span>
+                      {method === 'callout' && custDate && (
+                        <b>
+                          Appointment on {longDate(custDate)}
+                          {slot && <><br />at {slot}</>}
+                        </b>
+                      )}
+                    </>
+                  ) : (
+                    <span></span>
+                  )}
                 </div>
               </div>
-              <div className="bk-field">
-                <label htmlFor="f-when">When suits you?</label>
-                <select id="f-when" className="bk-input" value={form.when} onChange={(e) => setForm({ ...form, when: e.target.value })}>
-                  <option>As soon as possible</option>
-                  <option>Today</option>
-                  <option>Tomorrow morning</option>
-                  <option>Tomorrow afternoon</option>
-                  <option>Tomorrow evening</option>
-                  <option>This weekend</option>
-                </select>
-              </div>
-              <div className="bk-field">
-                <label htmlFor="f-notes">Anything else? (optional)</label>
-                <textarea id="f-notes" className="bk-input" rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="e.g. parking info, or what happened to the device" />
-              </div>
-
-              {error && <p className="bk-error" role="alert">{error}</p>}
-
-              <button className="bk-primary bk-wide" onClick={sendBooking}>
-                <FontAwesomeIcon icon={faCommentDots} /> Send booking on WhatsApp
+              <button type="button" className="bk-order-toggle" onClick={() => setOrderOpen((o) => !o)} aria-expanded={orderOpen} aria-controls="bk-order">
+                {orderOpen ? 'hide order' : 'view order'}
               </button>
-              <a className="bk-secondary bk-wide" href={PHONE_TEL}>
-                <FontAwesomeIcon icon={faPhone} /> Or call {PHONE_DISPLAY}
-              </a>
+
+              <div className="bk-fin-form">
+                <div className="bk-cb-group">
+                  <Tile className="bk-cb-row" onClick={() => setCustomerType('private')} pressed={customerType === 'private'}>
+                    <Check on={customerType === 'private'} />Private
+                  </Tile>
+                  <Tile className="bk-cb-row" onClick={() => setCustomerType('business')} pressed={customerType === 'business'}>
+                    <Check on={customerType === 'business'} />Business
+                  </Tile>
+                </div>
+
+                <div className="bk-fl-grid">
+                  {customerType === 'business' && (
+                    <Field id="f-company" label="Company name" required full invalid={invalid.includes('company')}>
+                      <input id="f-company" className="bk-fl-input" value={form.company} onChange={(e) => setField('company', e.target.value)} autoComplete="organization" />
+                    </Field>
+                  )}
+                  <Field id="f-first" label="First name" required invalid={invalid.includes('firstName')}>
+                    <input id="f-first" className="bk-fl-input" value={form.firstName} onChange={(e) => setField('firstName', e.target.value)} autoComplete="given-name" />
+                  </Field>
+                  <Field id="f-last" label="Last name" required invalid={invalid.includes('lastName')}>
+                    <input id="f-last" className="bk-fl-input" value={form.lastName} onChange={(e) => setField('lastName', e.target.value)} autoComplete="family-name" />
+                  </Field>
+                  <Field id="f-phone" label="Phone number" required invalid={invalid.includes('phone')}>
+                    <input id="f-phone" className="bk-fl-input" type="tel" inputMode="tel" value={form.phone} onChange={(e) => setField('phone', e.target.value)} autoComplete="tel" />
+                  </Field>
+                  <Field id="f-email" label="Email" required invalid={invalid.includes('email')}>
+                    <input id="f-email" className="bk-fl-input" type="email" inputMode="email" value={form.email} onChange={(e) => setField('email', e.target.value)} autoComplete="email" />
+                  </Field>
+
+                  {method !== 'callout' && (
+                    <>
+                      <Field id="f-when" label="When suits you?" full>
+                        <select id="f-when" className="bk-fl-input" value={form.when} onChange={(e) => setField('when', e.target.value)}>
+                          {WHEN_OPTIONS.map((o) => <option key={o}>{o}</option>)}
+                        </select>
+                      </Field>
+                      {form.when === 'Other' && (
+                        <>
+                          <Field id="f-odate" label="Date" required invalid={invalid.includes('otherDate')}>
+                            <input id="f-odate" className="bk-fl-input" type="date" min={todayKey} value={form.otherDate} onChange={(e) => setField('otherDate', e.target.value)} />
+                          </Field>
+                          <Field id="f-otime" label="Time" required invalid={invalid.includes('otherTime')}>
+                            <input id="f-otime" className="bk-fl-input" type="time" value={form.otherTime} onChange={(e) => setField('otherTime', e.target.value)} />
+                          </Field>
+                        </>
+                      )}
+                    </>
+                  )}
+
+                  <Field id="f-notes" label="Notes" full>
+                    <textarea id="f-notes" className="bk-fl-input" rows={4} value={form.notes} onChange={(e) => setField('notes', e.target.value)} />
+                  </Field>
+                </div>
+
+                {methodInfo && (
+                  <>
+                    <h3 className="bk-fin-h">Select Payment Option <span className="bk-req">*</span></h3>
+                    <div className="bk-pay">
+                      <Tile className="bk-pay-row" onClick={() => setPayOption('deposit')} pressed={payOption === 'deposit'}>
+                        <Check on={payOption === 'deposit'} />
+                        <span className="bk-pay-text">
+                          <b>Pay only the deposit – {money2(DEPOSIT)} now</b>
+                          <small>Pay the remaining amount after the repair</small>
+                        </span>
+                      </Tile>
+                      <Tile className={`bk-pay-row ${canPayFull ? '' : 'is-disabled'}`} onClick={() => { if (canPayFull) setPayOption('full'); }} pressed={payOption === 'full'}>
+                        <Check on={payOption === 'full'} />
+                        <span className="bk-pay-text">
+                          <b>Pay the full amount – {money2(grandTotal)} now</b>
+                          <small>{canPayFull ? 'No payment due after the repair' : 'Not available: a repair is priced on request'}</small>
+                        </span>
+                      </Tile>
+                    </div>
+
+                    <h3 className="bk-fin-h">Select Payment Method <span className="bk-req">*</span></h3>
+                    <div className="bk-paymethod">
+                      <span className="bk-radio" aria-hidden="true" />
+                      <span className="bk-paymethod-text">Secure Card Payment via Stripe</span>
+                      <span className="bk-paylogos">
+                        <ImgOr src="/images/payments/payment-logos.png" alt="Visa, Mastercard and 21 more" className="bk-paylogos-img">
+                          <span className="bk-paylogo bk-paylogo-text">Visa · Mastercard +21</span>
+                        </ImgOr>
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                <Tile className="bk-cb-row bk-terms" onClick={() => setTerms((t) => !t)} pressed={terms}>
+                  <Check on={terms} />
+                  <span>
+                    I accept the{' '}
+                    <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>terms &amp; conditions</a>
+                  </span>
+                </Tile>
+
+                <p className="bk-fin-total">Total <b>{grandText}</b></p>
+                {error && <p className="bk-error bk-fin-error" role="alert">{error}</p>}
+
+                <div className="bk-fin-actions">
+                  <button type="button" className="bk-confirm" onClick={sendBooking} disabled={paying}>
+                    {paying ? 'Opening secure payment…' : <>Confirm Appointment <FontAwesomeIcon icon={faCaretRight} /></>}
+                  </button>
+                </div>
+                {payFailed && (
+                  <p className="bk-fin-call">
+                    <button type="button" className="bk-link" onClick={() => sendWhatsApp(`not paid yet, would like to pay the ${payText}`)}>
+                      Send my booking on WhatsApp instead
+                    </button>
+                  </p>
+                )}
+                {/* <p className="bk-fin-call">Prefer to talk? <a href={PHONE_TEL}>Call {PHONE_DISPLAY}</a></p> */}
+              </div>
             </div>
           </div>
         )}
@@ -1520,6 +2157,7 @@ const BookingPage: React.FC = () => {
 };
 
 export default BookingPage;
+
 
 
 // import React from 'react';
