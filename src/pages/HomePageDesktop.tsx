@@ -400,20 +400,21 @@ import {
   IconDefinition,
 } from '@fortawesome/free-solid-svg-icons';
 import './HomePageDesktop.css';
+import HomePageMobile from './HomePageMobile';
 
 /* ------------------------------------------------------------------
    Business details
 ------------------------------------------------------------------- */
-const PHONE_DISPLAY = '07572 424207';
-const PHONE_TEL = 'tel:+447572424207';
+export const PHONE_DISPLAY = '07572 424207';
+export const PHONE_TEL = 'tel:+447572424207';
 const WHATSAPP_NUMBER = '447572424207';
 
 /* ------------------------------------------------------------------
    Devices, brands and repairs
 ------------------------------------------------------------------- */
-type DeviceKey = 'phone' | 'macbook' | 'tablet' | 'laptop' | 'console';
+export type DeviceKey = 'phone' | 'macbook' | 'tablet' | 'laptop' | 'console';
 
-const DEVICES: { key: DeviceKey; label: string; icon: IconDefinition; modelHint: string }[] = [
+export const DEVICES: { key: DeviceKey; label: string; icon: IconDefinition; modelHint: string }[] = [
   { key: 'macbook', label: 'MacBook', icon: faLaptop, modelHint: 'e.g. MacBook Air M1 2020' },
   { key: 'phone', label: 'Smartphone', icon: faMobileScreenButton, modelHint: 'e.g. iPhone 13 or Galaxy S22' },
   { key: 'tablet', label: 'Tablet', icon: faTabletScreenButton, modelHint: 'e.g. iPad 9th gen or Galaxy Tab A8' },
@@ -433,10 +434,10 @@ const BRANDS: Record<DeviceKey, string[]> = {
   console: ['Sony PlayStation', 'Nintendo', 'Microsoft Xbox'],
 };
 
-type Repair = { key: string; label: string; sub: string };
+export type Repair = { key: string; label: string; sub: string };
 
 /* Each key is also the price column name in that gadget's Supabase table */
-const REPAIRS: Record<DeviceKey, Repair[]> = {
+export const REPAIRS: Record<DeviceKey, Repair[]> = {
   phone: [
     { key: 'screen', label: 'Screen Repair (Standard)', sub: 'Cracked, black or not responding to touch' },
     { key: 'oled', label: 'Soft OLED Screen Replacement', sub: 'Premium OLED screen that matches originals colour, brightness and feel' },
@@ -479,7 +480,7 @@ const REPAIRS: Record<DeviceKey, Repair[]> = {
 };
 
 /* Heading on the blue bar above the repair list */
-const REPAIR_GROUP_TITLE: Record<DeviceKey, string> = {
+export const REPAIR_GROUP_TITLE: Record<DeviceKey, string> = {
   phone: 'Common repairs',
   tablet: 'Common repairs',
   macbook: 'Common repairs',
@@ -543,7 +544,7 @@ const amount = (n: number) =>
   n.toLocaleString('en-GB', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 });
 
 /* £89 or £89.99 */
-const money = (n: number) =>
+export const money = (n: number) =>
   new Intl.NumberFormat('en-GB', {
     style: 'currency',
     currency: 'GBP',
@@ -568,7 +569,7 @@ const slug = (t: string) => t.toLowerCase().replace(/[^a-z0-9]/g, '');
              e.g. "01 iPhone 17.png" (the number isn't shown).
    Then redeploy. New folders and pictures appear on their own.
 ------------------------------------------------------------------- */
-type ModelEntry = { name: string; url: string; order: number };
+export type ModelEntry = { name: string; url: string; order: number };
 
 /* The website build lists every picture in the brands folders
    (brands/<device>/<brand>/picture). Brand logos sitting directly in
@@ -603,7 +604,7 @@ const brandForFolder = (device: DeviceKey, folder: string) => {
   );
 };
 
-const MODELS: Record<string, ModelEntry[]> = {};
+export const MODELS: Record<string, ModelEntry[]> = {};
 const EXTRA_BRANDS: Record<DeviceKey, string[]> = { phone: [], macbook: [], tablet: [], laptop: [], console: [] };
 
 for (const [path, url] of Object.entries(MODEL_FILES)) {
@@ -630,17 +631,17 @@ for (const list of Object.values(MODELS)) {
 /* Search inside the selected brand's models.
    "iphone17", "17 pro", "Pro 17" and "iPhone 17" all find the iPhone 17 Pro. */
 const squash = (t: string) => t.toLowerCase().replace(/[^a-z0-9]/g, '');
-const modelMatches = (name: string, query: string) => {
+export const modelMatches = (name: string, query: string) => {
   const n = squash(name);
   const words = query.toLowerCase().split(/\s+/).map(squash).filter(Boolean);
   return n.includes(squash(query)) || (words.length > 0 && words.every((w) => n.includes(w)));
 };
 
 /* Brand buttons for a device: the usual list plus any new brand folders */
-const brandsFor = (device: DeviceKey) => [...BRANDS[device], ...EXTRA_BRANDS[device]];
+export const brandsFor = (device: DeviceKey) => [...BRANDS[device], ...EXTRA_BRANDS[device]];
 
 /* Every model on the site, so the main search box can suggest them */
-type SearchHit = { device: DeviceKey; brand: string; entry: ModelEntry };
+export type SearchHit = { device: DeviceKey; brand: string; entry: ModelEntry };
 const ALL_MODELS: SearchHit[] = Object.entries(MODELS).flatMap(([key, list]) => {
   const i = key.indexOf(':');
   const device = key.slice(0, i) as DeviceKey;
@@ -654,46 +655,47 @@ const findModels = (query: string, limit = 6): SearchHit[] => {
     .filter((h) => modelMatches(h.entry.name, q) || modelMatches(`${h.brand} ${h.entry.name}`, q))
     .slice(0, limit);
 };
-const deviceLabel = (k: DeviceKey) => DEVICES.find((d) => d.key === k)?.label ?? '';
+export const deviceLabel = (k: DeviceKey) => DEVICES.find((d) => d.key === k)?.label ?? '';
 
 /* ------------------------------------------------------------------
    FINALIZE STEP SETTINGS: change these to suit your shop
 ------------------------------------------------------------------- */
-type MethodKey = 'postal' | 'callout';
-const SERVICE_METHODS: { key: MethodKey; title: string; sub: string; fee: number }[] = [
+export type MethodKey = 'postal' | 'callout';
+export type ServiceMethod = { key: MethodKey; title: string; sub: string; fee: number };
+export const SERVICE_METHODS: ServiceMethod[] = [
   { key: 'postal', title: 'Nationwide Postal Repair', sub: '24 - 48 Hours Process time', fee: 12 },
   { key: 'callout', title: 'Call-Out Repair', sub: 'Birmingham & Solihull Covered', fee: 20 },
 ];
 /* Where customers post their device (shown under Postal Repair) */
-const POSTAL_ADDRESS = {
-  area: 'NORTHFIELD',
-  lines: ['214 Turves Green', 'B31 4BN', 'Birmingham'],
+export const POSTAL_ADDRESS = {
+  area: 'EDGBASTON',
+  lines: ['Apex House 1st Floor, 3 Embassy Drive', 'Calthorpe Road', 'B15 1TR', 'Birmingham'],
 };
-const CALLOUT_SLOTS = ['09:00 — 12:00', '18:00 — 21:00'];
-const DEPOSIT = 10;
-const TERMS_URL = '/terms';
-const COUNTRIES = ['United Kingdom', 'Ireland'];
-const WHEN_OPTIONS = ['As soon as possible', 'Today', 'Tomorrow morning', 'Tomorrow afternoon', 'Tomorrow evening', 'This weekend', 'Other'];
+export const CALLOUT_SLOTS = ['09:00 — 12:00', '18:00 — 21:00'];
+export const DEPOSIT = 10;
+export const TERMS_URL = '/terms';
+export const COUNTRIES = ['United Kingdom', 'Ireland'];
+export const WHEN_OPTIONS = ['As soon as possible', 'Today', 'Tomorrow morning', 'Tomorrow afternoon', 'Tomorrow evening', 'This weekend', 'Other'];
 
 const EMPTY_FORM = {
   firstName: '', lastName: '', phone: '', email: '', company: '', notes: '',
   house: '', street: '', city: '', postcode: '', country: '',
   when: 'As soon as possible', otherDate: '', otherTime: '',
 };
-type FormData = typeof EMPTY_FORM;
+export type FormData = typeof EMPTY_FORM;
 
 /* £ 198.00 */
-const money2 = (n: number) =>
+export const money2 = (n: number) =>
   `£ ${n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 /* 2026-09-29 <-> dates */
-const dayKey = (d: Date) =>
+export const dayKey = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const fromKey = (k: string) => {
   const [y, m, d] = k.split('-').map(Number);
   return new Date(y, m - 1, d);
 };
 /* "Tuesday 29-09-2026" */
-const longDate = (k: string) => {
+export const longDate = (k: string) => {
   const d = fromKey(k);
   return `${d.toLocaleDateString('en-GB', { weekday: 'long' })} ${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
 };
@@ -730,11 +732,11 @@ const postcodeOk = (t: string) => /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i.test(t.
 
 /* Use a different logo file for a brand on one device type */
 const LOGO_OVERRIDES: Record<string, string> = { 'laptop:Huawei': 'huawei-laptop' };
-const brandLogo = (name: string, device?: string | null) =>
+export const brandLogo = (name: string, device?: string | null) =>
   `/images/brands/${LOGO_OVERRIDES[`${device}:${name}`] ?? slug(name)}.png`;
 const helpImg = (tab: string, i: number) => `/images/brands/${tab}-${i + 1}.png`;
 
-const ImgOr: React.FC<{ src: string; alt: string; className?: string; children: React.ReactNode }> = ({ src, alt, className, children }) => {
+export const ImgOr: React.FC<{ src: string; alt: string; className?: string; children: React.ReactNode }> = ({ src, alt, className, children }) => {
   const [failed, setFailed] = useState(false);
   if (failed) return <>{children}</>;
   return <img src={src} alt={alt} className={className} onError={() => setFailed(true)} loading="lazy" />;
@@ -742,7 +744,7 @@ const ImgOr: React.FC<{ src: string; alt: string; className?: string; children: 
 
 /* Clickable tile. Uses a div so your site-wide <button> styles
    (fixed height, pill corners) can't squash it. */
-const Tile: React.FC<{
+export const Tile: React.FC<{
   className: string;
   onClick: () => void;
   label?: string;
@@ -787,7 +789,7 @@ const Field: React.FC<{ id: string; label: string; required?: boolean; invalid?:
 );
 
 /* Icons for the service methods */
-const MethodIcon: React.FC<{ k: MethodKey }> = ({ k }) => {
+export const MethodIcon: React.FC<{ k: MethodKey }> = ({ k }) => {
   const common = { viewBox: '0 0 48 48', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, className: 'bk-method-icon', 'aria-hidden': true };
   if (k === 'postal') return (
     <svg {...common}><path d="M24 6 42 14v20L24 42 6 34V14z" /><path d="M6 14l18 8 18-8M24 22v20" /><path d="M15 10l18 8v7" /></svg>
@@ -801,7 +803,7 @@ const MethodIcon: React.FC<{ k: MethodKey }> = ({ k }) => {
 };
 
 /* Outline device icons */
-const DeviceIcon: React.FC<{ k: DeviceKey }> = ({ k }) => {
+export const DeviceIcon: React.FC<{ k: DeviceKey }> = ({ k }) => {
   const common = { viewBox: '0 0 64 64', fill: 'none', stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, className: 'bk-line-icon' };
   if (k === 'phone') return (
     <svg {...common}><rect x="21" y="6" width="22" height="50" rx="4" /><path d="M28 7.5h8v2a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1z" /><path d="M26 51h4M32 51h2" /></svg>
@@ -837,7 +839,7 @@ const HelpPhoneIcon: React.FC<{ className?: string }> = ({ className = 'bk-help-
 );
 
 /* Phone with a big question mark on the screen (used for "Other Model") */
-const OtherPhoneIcon: React.FC = () => (
+export const OtherPhoneIcon: React.FC = () => (
   <svg className="bk-model-icon bk-model-icon-other" viewBox="0 0 64 72" aria-hidden="true">
     <rect x="15" y="4" width="34" height="62" rx="4" fill="none" stroke="currentColor" strokeWidth="2.4" />
     <path d="M27 5.5h10v2.5H27z" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -1006,7 +1008,7 @@ const DrawnScreen: React.FC<{ screen: Screen }> = ({ screen }) => {
 
 const CLOSE_MS = 350; /* keep in step with the bk-lift animation in the CSS */
 
-const ModelHelp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+export const ModelHelp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [tab, setTab] = useState<HelpTab>('ios');
   const [closing, setClosing] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -1078,9 +1080,23 @@ const ModelHelp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 ------------------------------------------------------------------- */
 const STEPS: [string, string][] = [['Select', 'device'], ['Select', 'repair'], ['Finalize', 'order']];
 
+/* Phones use the Bootstrap mobile layout (same breakpoint as Bootstrap's "md") */
+const MOBILE_QUERY = '(max-width: 767.98px)';
+const useIsMobile = () => {
+  const [mobile, setMobile] = useState(() => typeof window !== 'undefined' && window.matchMedia(MOBILE_QUERY).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_QUERY);
+    const onChange = () => setMobile(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return mobile;
+};
+
 const BookingPage: React.FC = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const isMobile = useIsMobile();
 
   const [saved] = useState(loadSaved);
   const [step, setStep] = useState<1 | 2 | 3>(saved.device ? saved.step ?? 1 : 1);
@@ -1459,6 +1475,89 @@ const BookingPage: React.FC = () => {
     );
   }
 
+  /* Phones get the Bootstrap version in HomePageMobile.tsx (same state and logic) */
+  if (isMobile) {
+    return (
+      <HomePageMobile
+        b={{
+      step,
+      setStep,
+      device,
+      setDevice,
+      brand,
+      setBrand,
+      model,
+      setModel,
+      modelImg,
+      setModelImg,
+      otherModel,
+      setOtherModel,
+      modelSearch,
+      setModelSearch,
+      search,
+      setSearch,
+      searchOpen,
+      setSearchOpen,
+      activeHit,
+      setActiveHit,
+      hits,
+      pickHit,
+      handleSearch,
+      showHelp,
+      setShowHelp,
+      loadingKey,
+      withSpinner,
+      scrollTop,
+      goBack,
+      deviceName,
+      deviceInfo,
+      repairs,
+      toggleRepair,
+      selected,
+      priceOf,
+      pricesLoading,
+      repairHint,
+      getQuote,
+      bookNow,
+      totalText,
+      grandText,
+      grandTotal,
+      fee,
+      methodInfo,
+      method,
+      chooseMethod,
+      custDate,
+      chooseDate,
+      slot,
+      setSlot,
+      slotPast,
+      days,
+      dayStart,
+      setDayStart,
+      todayKey,
+      orderOpen,
+      setOrderOpen,
+      form,
+      setField,
+      invalid,
+      customerType,
+      setCustomerType,
+      payOption,
+      setPayOption,
+      canPayFull,
+      terms,
+      setTerms,
+      error,
+      payFailed,
+      paying,
+      payText,
+      sendBooking,
+      sendWhatsApp,
+        }}
+      />
+    );
+  }
+
   return (
     <div className={`bk-page ${step === 2 && selected.length ? 'has-mobile-bar' : ''}`}>
       <div className="bk-wrap">
@@ -1817,10 +1916,10 @@ const BookingPage: React.FC = () => {
               </div>
               {totalNote && !pricesLoading && <p className="bk-quote-note">{totalNote}</p>}
 
-              {/* <button type="button" className="bk-quote-btn" onClick={getQuote}>
+              <button type="button" className="bk-quote-btn" onClick={getQuote}>
                 <b>Get A Quote</b>
                 <small>Send your repairs to us on WhatsApp</small>
-              </button> */}
+              </button>
               <button type="button" className="bk-book-btn" onClick={bookNow}>
                 <b>Book Repair Now</b>
                 <small>{selected.length ? 'Next: your details' : 'Select which service?'}</small>
@@ -1936,12 +2035,12 @@ const BookingPage: React.FC = () => {
                           <Field id="f-post" label="Postcode" required invalid={invalid.includes('postcode')}>
                             <input id="f-post" className="bk-fl-input" value={form.postcode} onChange={(e) => setField('postcode', e.target.value.toUpperCase())} autoComplete="postal-code" />
                           </Field>
-                          {/* <Field id="f-country" label="Country" required full invalid={invalid.includes('country')}>
+                          <Field id="f-country" label="Country" required full invalid={invalid.includes('country')}>
                             <select id="f-country" className="bk-fl-input" value={form.country} onChange={(e) => setField('country', e.target.value)} autoComplete="country-name">
                               <option value="">-- Select --</option>
                               {COUNTRIES.map((c) => <option key={c}>{c}</option>)}
                             </select>
-                          </Field> */}
+                          </Field>
                         </div>
 
                         {m.key === 'postal' && (
@@ -2144,7 +2243,7 @@ const BookingPage: React.FC = () => {
                     </button>
                   </p>
                 )}
-                {/* <p className="bk-fin-call">Prefer to talk? <a href={PHONE_TEL}>Call {PHONE_DISPLAY}</a></p> */}
+                <p className="bk-fin-call">Prefer to talk? <a href={PHONE_TEL}>Call {PHONE_DISPLAY}</a></p>
               </div>
             </div>
           </div>
@@ -2157,7 +2256,6 @@ const BookingPage: React.FC = () => {
 };
 
 export default BookingPage;
-
 
 
 // import React from 'react';

@@ -1,91 +1,181 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+/* ==================================================================
+   HomePageMobile: phone layout of the booking page.
+   The look (colours, tiles, cards, tick boxes, text boxes) comes from
+   HomePageDesktop.css. This file only adjusts sizes and spacing so the
+   same design fits a phone screen. Everything is scoped to .bk-m, so
+   the desktop page and the rest of your site are not affected.
+   ================================================================== */
 
-body {
-  font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  background: #fff;
+/* ---------- Sizes for small screens ---------- */
+.bk-page.bk-m {
+  --panel-overhang: 4px;
+  --device-icon-size: 58px;
+  --device-label-size: 13px;
+  --model-image-height: 86px;
+  --model-name-size: 14px;
+  padding: 20px 0 48px;
+  -webkit-tap-highlight-color: transparent;
+}
+.bk-page.bk-m.has-mobile-bar { padding-bottom: 130px; }
+
+/* ---------- Title, stepper, headings ---------- */
+.bk-page.bk-m .bk-page-title { margin: 0 auto 22px; padding: 0 6px; font-size: 23px; line-height: 1.2; }
+.bk-page.bk-m .bk-stepper { margin: 0 auto 26px; }
+.bk-page.bk-m .bk-stepper-item { gap: 8px; font-size: 13px; }
+.bk-page.bk-m .bk-stepper-dot { width: 34px; height: 34px; font-size: 15px; }
+.bk-page.bk-m .bk-stepper-item + .bk-stepper-item::before { top: 13px; height: 7px; }
+.bk-page.bk-m .bk-heading { gap: 12px; margin: 0 0 18px; }
+.bk-page.bk-m .bk-heading h1 { font-size: 24px; line-height: 1.2; }
+.bk-page.bk-m .bk-back { width: 42px; height: 42px; }
+.bk-page.bk-m .bk-lead { font-size: 16px; }
+
+/* ---------- Search panel: stacked, full width ---------- */
+.bk-page.bk-m .bk-search-panel { flex-direction: column; align-items: stretch; gap: 14px; margin: 0 0 26px; padding: 18px 16px; border-radius: 18px; }
+.bk-page.bk-m .bk-search-main { flex: 1 1 auto; }
+.bk-page.bk-m .bk-search { height: 56px; padding: 0 6px 0 16px; }
+.bk-page.bk-m .bk-search input { font-size: 16px; } /* 16px stops iPhones zooming in */
+.bk-page.bk-m .bk-search button { width: 46px; height: 44px; }
+.bk-page.bk-m .bk-help-btn { flex-direction: row; justify-content: center; width: auto; margin: 0; gap: 10px; }
+.bk-page.bk-m .bk-help-svg { width: 26px; height: 40px; }
+.bk-page.bk-m .bk-suggest { max-height: 300px; }
+
+/* ---------- Gadget, brand and model tiles ---------- */
+.bk-page.bk-m .bk-tile { border-radius: 16px; }
+.bk-page.bk-m .bk-tile-device { gap: 14px; padding: 10px; }
+.bk-page.bk-m .bk-tile-brand { padding: 8px; font-size: 15px; }
+.bk-page.bk-m .bk-tile-model { aspect-ratio: auto; min-height: 196px; padding: 18px 8px 14px; }
+.bk-page.bk-m .bk-model-name { margin-top: 14px; }
+.bk-page.bk-m .bk-model-help-icon { height: 64px; margin-top: 12px; }
+.bk-page.bk-m .bk-model-help-text { margin-top: 14px; font-size: 14px; }
+.bk-page.bk-m .bk-models-head { gap: 12px; margin: 8px 0 16px; }
+.bk-page.bk-m .bk-models-title { margin: 0; }
+.bk-page.bk-m .bk-model-search { width: 100%; height: 48px; }
+.bk-page.bk-m .bk-model-search input { font-size: 16px; }
+
+/* "Type your model" card */
+.bk-page.bk-m .bk-card { padding: 20px 16px; }
+.bk-page.bk-m .bk-row { flex-direction: column-reverse; align-items: stretch; gap: 12px; }
+.bk-page.bk-m .bk-row .bk-primary { width: 100%; }
+
+/* ---------- Step 2: repairs ---------- */
+.bk-page.bk-m .bk-device-head { gap: 14px; margin-bottom: 24px; padding: 12px 14px; }
+.bk-page.bk-m .bk-device-pic { width: 60px; height: 60px; }
+.bk-page.bk-m .bk-device-pic .bk-line-icon { width: 52px; height: 52px; }
+.bk-page.bk-m .bk-device-title { font-size: 22px; }
+.bk-page.bk-m .bk-device-type { margin-top: 4px; font-size: 16px; }
+.bk-page.bk-m .bk-repair-group { gap: 12px; padding: 14px 16px; cursor: default; }
+.bk-page.bk-m .bk-repair-group:hover { border-color: transparent; }
+.bk-page.bk-m .bk-repair-group-title { font-size: 14px; }
+.bk-page.bk-m .bk-repair-card { gap: 12px; padding: 16px 14px 18px 14px; }
+.bk-page.bk-m .bk-repair-text strong { font-size: 16px; }
+.bk-page.bk-m .bk-repair-text small { font-size: 14px; }
+.bk-page.bk-m .bk-price.has-price { font-size: 20px; }
+.bk-page.bk-m .bk-quote { padding: 24px 20px 0; }
+.bk-page.bk-m .bk-quote-title { font-size: 24px; }
+
+/* ---------- Step 3: finalize ---------- */
+.bk-page.bk-m .bk-fin { display: block; }
+.bk-page.bk-m .bk-fin-heading { margin-bottom: 22px; }
+.bk-page.bk-m .bk-fin-device { gap: 16px; margin: 0 0 18px 4px; }
+.bk-page.bk-m .bk-fin-pic { width: 70px; height: 92px; }
+.bk-page.bk-m .bk-fin-name { font-size: 22px; }
+.bk-page.bk-m .bk-fin-sub { font-size: 18px; }
+.bk-page.bk-m .bk-order { padding: 22px 20px; }
+.bk-page.bk-m .bk-order-lines li { font-size: 15px; }
+.bk-page.bk-m .bk-order-box { font-size: 17px; }
+.bk-page.bk-m .bk-order-total span:first-child { font-size: 24px; }
+.bk-page.bk-m .bk-order-total span:last-child { font-size: 30px; }
+.bk-page.bk-m .bk-order-toggle { padding: 10px 26px; }
+.bk-page.bk-m .bk-fin-label { margin: 32px 0 14px 4px; }
+
+.bk-page.bk-m .bk-method-head { gap: 14px; padding: 18px; }
+.bk-page.bk-m .bk-method-title { font-size: 16px; gap: 8px; }
+.bk-page.bk-m .bk-method-sub { font-size: 14px; }
+.bk-page.bk-m .bk-method-body { padding: 0 16px 20px; }
+
+/* Dates scroll sideways instead of squeezing into one row */
+.bk-page.bk-m .bk-days {
+  display: flex;
+  gap: 8px;
+  margin: 0 -16px;
+  padding: 2px 16px 6px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.bk-page.bk-m .bk-days::-webkit-scrollbar { display: none; }
+.bk-page.bk-m .bk-day { flex: 0 0 58px; gap: 6px; padding: 10px 0; font-size: 15px; scroll-snap-align: start; }
+.bk-page.bk-m .bk-day:not(.is-selected) { border-color: #E5E5EA; }
+.bk-page.bk-m .bk-arrow { width: 34px; height: 34px; font-size: 12px; }
+
+/* Time slots side by side, equal width */
+.bk-page.bk-m .bk-slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.bk-page.bk-m .bk-slot { padding: 14px 6px; font-size: 15px; text-align: center; }
+
+/* Text boxes */
+.bk-page.bk-m .bk-fl-grid { gap: 24px 12px; }
+.bk-page.bk-m .bk-fl label { left: 10px; padding: 0 6px; font-size: 11px; letter-spacing: .12em; }
+.bk-page.bk-m .bk-fl-input { height: 56px; padding: 0 14px; font-size: 16px; }
+.bk-page.bk-m textarea.bk-fl-input { padding: 14px; }
+.bk-page.bk-m .bk-post-addr { margin-top: 26px; padding: 0 4px; font-size: 16px; }
+
+/* Details, payment and confirm */
+.bk-page.bk-m .bk-fin-form { margin-top: 32px; }
+.bk-page.bk-m .bk-cb-group { gap: 28px; margin-bottom: 30px; }
+.bk-page.bk-m .bk-cb-row { font-size: 18px; }
+.bk-page.bk-m .bk-fin-h { margin: 32px 0 14px 4px; }
+.bk-page.bk-m .bk-pay { padding: 20px 16px; }
+.bk-page.bk-m .bk-pay-text b { font-size: 17px; }
+.bk-page.bk-m .bk-pay-text small { font-size: 14px; }
+.bk-page.bk-m .bk-paymethod { flex-wrap: wrap; padding: 20px 16px; }
+.bk-page.bk-m .bk-paymethod-text { font-size: 17px; }
+.bk-page.bk-m .bk-paylogos { width: 100%; padding-left: 38px; }
+.bk-page.bk-m .bk-paylogos-img { height: 32px; }
+.bk-page.bk-m .bk-terms { margin-top: 28px; font-size: 16px; }
+.bk-page.bk-m .bk-fin-total { margin-top: 22px; }
+.bk-page.bk-m .bk-confirm { width: 100%; padding: 18px 20px; font-size: 20px; }
+.bk-page.bk-m .bk-fin-call { text-align: center; }
+
+/* Very narrow phones (iPhone SE and similar) */
+@media (max-width: 374px) {
+  .bk-page.bk-m .bk-page-title { font-size: 20px; }
+  .bk-page.bk-m .bk-heading h1 { font-size: 21px; }
+  .bk-page.bk-m .bk-fl-grid { grid-template-columns: minmax(0, 1fr); }
+  .bk-page.bk-m .bk-tile-model { min-height: 180px; }
 }
 
-/* ------------------------------------------------------------ header */
-.mq-header {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-  height: 64px; display: flex; align-items: center;
-  background: #fff; border-bottom: 3px solid #1E9E34;
+/* ---------- Floating Book bar ---------- */
+/* It slides away while the Book button in "Service(s) Selected" is on screen */
+.bk-page.bk-m .bk-mobile-bar {
+  animation: none;
+  transition: opacity .2s ease, transform .2s ease;
 }
-.mq-header-logo { height: 48px; width: auto; cursor: pointer; }
-.mq-header-call {
-  background: #0A4A1C; color: #fff; border-radius: 999px;
-  padding: 8px 18px; font-weight: 600; font-size: 0.9rem;
+.bk-page.bk-m .bk-mobile-bar.is-hidden {
+  opacity: 0;
+  transform: translateY(24px);
+  pointer-events: none;
 }
-.mq-header-call:hover { background: #1E9E34; color: #fff; }
+.bk-page.bk-m .bk-mobile-bar-info small { white-space: nowrap; }
+/* Room under the page so the last button can scroll clear of the bar */
+.bk-page.bk-m.has-mobile-bar { padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
 
-.mq-main { padding-top: 64px; padding-bottom: 72px; }
-
-/* -------------------------------------------------------------- hero */
-.hero-section { position: relative; }
-.mq-hero-script { width: 70%; max-width: 300px; height: auto; display: block; }
-
-.btn-start {
-  background: #1E9E34; color: #fff; border: 0;
-  border-radius: 12px; padding: 12px 16px; font-weight: 600;
-  box-shadow: 0 8px 18px rgba(30, 158, 52, 0.3);
+@media (prefers-reduced-motion: reduce) {
+  .bk-page.bk-m .bk-mobile-bar { transition: none; }
 }
-.btn-start:hover, .btn-start:focus { background: #0E6B25; color: #fff; }
 
-.btn-outline-quick {
-  border: 2px solid #0A4A1C; color: #0A4A1C;
-  border-radius: 12px; padding: 10px 12px; font-weight: 600; font-size: 0.95rem;
+/* Narrower Book Repair Now button in the floating bar */
+.bk-page.bk-m .bk-mobile-bar-btn {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 190px;
+  padding: 12px 22px;
+  font-size: 15px;
+  white-space: nowrap;
 }
-.btn-outline-quick:hover { background: #0A4A1C; color: #fff; }
 
-.form-select { border-radius: 12px; padding: 12px 16px; border: 2px solid #DCE8DF; }
-.form-select:focus { border-color: #1E9E34; box-shadow: 0 0 0 0.2rem rgba(30, 158, 52, 0.2); }
+/* Smaller payment logos on phones */
+.bk-page.bk-m .bk-paylogos-img { height: 16px; }
 
-/* hero cards (md and up) */
-.hero-cards { justify-content: center; }
-.hero-cards .card { border: 0; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 24px rgba(0,0,0,.1); }
-.hero-cards .side-card { width: 220px; }
-.card-img { width: 100%; height: 100%; object-fit: cover; }
-.card-img-contain { object-fit: contain; }
-.mq-green-bg { background: #0A4A1C; }
-.weight-select-btn {
-  background: #1E9E34; color: #fff; border-radius: 999px; padding: 6px 18px; font-size: 0.85rem;
-}
-.weight-select-btn:hover { background: #0E6B25; color: #fff; }
-.card-footer { background: #fff; border-top: 0; }
-
-/* ------------------------------------------------------ callout card */
-.mq-callout-card { background: #0A4A1C; border-radius: 18px; cursor: pointer; }
-.mq-callout-card img { display: block; }
-
-/* ---------------------------------------------------------- sections */
-.popular-services { margin-bottom: 1rem; }
-.popular-services .card { border-radius: 14px; overflow: hidden; transition: transform 0.2s; }
-.popular-services .card:hover { transform: translateY(-2px); }
-.mq-repair-img { aspect-ratio: 150 / 192; overflow: hidden; }
-.mq-repair-img img { object-fit: contain; }
-
-/* ------------------------------------------------------ contact card */
-.mq-contact-card {
-  background: linear-gradient(160deg, #0A3D16, #0F6A26 55%, #1F9A33);
-  border-radius: 20px; padding: 28px 22px;
-}
-.mq-rounded { border-radius: 12px; padding: 12px 16px; font-weight: 600; }
-
-/* ---------------------------------------------------- sticky call bar */
-.mq-sticky-bar {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000;
-  display: flex; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
-  background: #fff; border-top: 1px solid #DCE8DF;
-  box-shadow: 0 -6px 16px rgba(0,0,0,.06);
-}
-.mq-sticky-bar a {
-  flex: 1; text-align: center; text-decoration: none;
-  padding: 12px; border-radius: 12px; font-weight: 700;
-  background: #1E9E34; color: #fff;
-}
-.mq-sticky-bar a:last-child { background: #0A4A1C; }
-
-@media (min-width: 768px) {
-  .mq-main { padding-bottom: 0; }
-  .mq-hero-script { width: 60%; }
-}
+/* Smaller "Appointment on … at …" text on phones */
+.bk-page.bk-m .bk-order-method b { font-size: 13px; line-height: 1.35; }
