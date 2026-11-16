@@ -618,7 +618,7 @@ export default function BookingBoard() {
     (async () => {
       const { data } = await supabase.from("profiles")
         .select("role").eq("id", session.user.id).single();
-      if (data?.role !== "ADMIN") navigate("/");
+      if (data?.role !== "admin") navigate("/");
     })();
   }, [session, navigate]);
 
